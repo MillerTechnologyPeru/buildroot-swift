@@ -89,7 +89,7 @@ RUN set -e; \
     && chmod -R o+r /usr/lib/swift \
     && rm -rf "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
 
-ENV SWIFT_NATIVE_TOOLS = "/workspaces/swift/usr/bin"
+ENV SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
 
 # Download LLVM headers
 RUN set -e; \
@@ -99,10 +99,11 @@ RUN set -e; \
     && unzip llvm-swift.zip \
     && rm -rf llvm-swift.zip
 
-ENV SWIFT_LLVM_DIR = "/workspaces/llvm"
+ENV SWIFT_LLVM_DIR=/workspaces/llvm
 
 # Download Buildroot
 ENV BUILDROOT_RELEASE=2022.08.1
+
 RUN set -e; \
     cd /workspaces \
     && wget "https://buildroot.org/downloads/buildroot-$BUILDROOT_RELEASE.tar.gz" \
@@ -110,4 +111,4 @@ RUN set -e; \
     && mv "buildroot-$BUILDROOT_RELEASE" buildroot \
     && rm -rf "buildroot-$BUILDROOT_RELEASE.tar.gz"
 
-ENV BUILDROOT_DIR = "/workspaces/buildroot"
+ENV BUILDROOT_DIR=/workspaces/buildroot
