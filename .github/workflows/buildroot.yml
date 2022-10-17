@@ -1,0 +1,25 @@
+name: Buildroot
+
+on: [push]
+
+jobs:
+    build:
+        name: Build Swift for Buildroot
+        strategy:
+          matrix:
+            config: ["imx6slevk"]
+        runs-on: ubuntu-20.04
+        container: colemancda/swift-buildroot
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Build
+          run: |
+            export SRC_ROOT=$GITHUB_WORKSPACE
+            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: filesystem
+            path: $BUILDROOT_DIR/output/images/rootfs.tar
