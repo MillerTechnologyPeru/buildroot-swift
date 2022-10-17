@@ -25,10 +25,6 @@ COPY library-scripts/node-debian.sh /tmp/library-scripts/
 RUN bash /tmp/library-scripts/node-debian.sh "${NVM_DIR}" "${NODE_VERSION}" "${USERNAME}" \
     && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
-# [Optional] Uncomment this section to install additional OS packages you may want.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
-
 # Install dependencies
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true && apt-get -q update && \
     apt-get -q install -y \
@@ -63,5 +59,40 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true && ap
     neofetch \
     && rm -r /var/lib/apt/lists/*
 
-# [Optional] Uncomment this line to install global node packages.
-# RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1
+# Download Swift toolchain
+RUN set -e; \
+    ARCH_NAME="$(dpkg --print-architecture)"; \
+    url=; \
+    case "${ARCH_NAME##*-}" in \
+        'amd64') \
+            OS_ARCH_SUFFIX=''; \
+            ;; \
+        'arm64') \
+            OS_ARCH_SUFFIX='-aarch64'; \
+            ;; \
+        *) echo >&2 "error: unsupported architecture: '$ARCH_NAME'"; exit 1 ;; \
+    esac; \
+    SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX" \
+    && SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz" \
+    && SWIFT_SIG_URL="$SWIFT_BIN_URL.sig" \
+    # - Grab curl here so we cache better up above
+    && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -q update && apt-get -q install -y curl && rm -rf /var/lib/apt/lists/* \
+    # - Download the GPG keys, Swift toolchain, and toolchain signature, and verify.
+    && export GNUPGHOME="$(mktemp -d)" \
+    && curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz "$SWIFT_SIG_URL" -o swift.tar.gz.sig \
+    && gpg --batch --quiet --keyserver keyserver.ubuntu.com --recv-keys "$SWIFT_SIGNING_KEY" \
+    && gpg --batch --verify swift.tar.gz.sig swift.tar.gz \
+    # - Unpack the toolchain, set libs permissions, and clean up.
+    && mkdir -p /workspaces/swift \
+    && tar -xzf swift.tar.gz --directory /workspaces/swift --strip-components=1 \
+    && chmod -R o+r /usr/lib/swift \
+    && rm -rf "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
+
+# Download LLVM headers
+RUN set -e; \
+    mkdir -p /workspaces/llvm \
+    && cd /workspaces/llvm \
+    && wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip \
+    && unzip llvm-swift.zip \
+    && rm -rf llvm-swift.zip
