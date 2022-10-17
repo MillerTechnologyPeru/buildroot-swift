@@ -1,0 +1,10 @@
+menu "Swift runtime"
+	source "package/swift/Config.in"
+    source "package/foundation/Config.in"
+endmenu
+menu "Swift libraries"
+	source "package/xctest/Config.in"
+endmenu
+menu "Swift Tools"
+	source "package/swift-hello/Config.in"
+endmenu
