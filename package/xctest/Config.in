@@ -1,0 +1,12 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_XCTEST
+	bool "xctest"
+	depends on BR2_PACKAGE_SWIFT
+	select BR2_PACKAGE_FOUNDATION
+	help
+	  The XCTest library is designed to provide a common framework for writing unit tests in Swift, for Swift packages and applications.
+
+	  http://swift.org
+
+endif
