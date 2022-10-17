@@ -1,0 +1,18 @@
+menu "Swift runtime"
+
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift/Config.in"
+    source "$BR2_EXTERNAL_SWIFT_PATH/package/foundation/Config.in"
+
+endmenu
+
+menu "Swift libraries"
+
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/xctest/Config.in"
+
+endmenu
+
+menu "Swift Tools"
+
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-hello/Config.in"
+
+endmenu
