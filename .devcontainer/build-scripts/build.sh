@@ -1,9 +1,12 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
 # Configurable
 SRC_ROOT="${SRC_ROOT:=$(pwd)}"
 DEFCONFIG="${DEFCONFIG:=imx6slevk_swift_defconfig}"
+BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
+SWIFT_NATIVE_TOOLS="${SWIFT_NATIVE_TOOLS:=/workspaces/swift/usr/bin}"
+SWIFT_LLVM_DIR="${SWIFT_LLVM_DIR:=/workspaces/llvm}"
 
 # Modify defconfig
 DEFCONFIG_FILE=$SRC_ROOT/configs/$DEFCONFIG
