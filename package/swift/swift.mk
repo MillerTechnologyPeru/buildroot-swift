@@ -170,6 +170,9 @@ define SWIFT_INSTALL_STAGING_CMDS
 	(cd $(SWIFT_BUILDDIR) && ninja install)
 endef
 
+HOST_SWIFT_SUPPORT_DIR=$(HOST_DIR)/usr/share/swift
+SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
+
 define HOST_SWIFT_INSTALL_CMDS
 	# Create Swift support directory
 	mkdir -p $(HOST_SWIFT_SUPPORT_DIR)
