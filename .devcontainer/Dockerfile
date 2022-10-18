@@ -25,90 +25,24 @@ COPY library-scripts/node-debian.sh /tmp/library-scripts/
 RUN bash /tmp/library-scripts/node-debian.sh "${NVM_DIR}" "${NODE_VERSION}" "${USERNAME}" \
     && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
-# Install dependencies
-RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true && apt-get -q update && \
-    apt-get -q install -y \
-    ninja-build \
-    qemu-user-static \
-    wget \
-    bash \
-    bc \
-    binutils \
-    build-essential \
-    bzip2 \
-    cpio \
-    g++ \
-    gcc \
-    git \
-    gzip \
-    libncurses5-dev \
-    make \
-    mercurial \
-    whois \
-    patch \
-    perl \
-    python3 \
-    rsync \
-    sed \
-    tar \
-    unzip \
-    file \
-    bison \
-    flex \
-    cmake \
-    neofetch \
-    && rm -r /var/lib/apt/lists/*
-
-# Download Swift toolchain
-RUN set -e; \
-    ARCH_NAME="$(dpkg --print-architecture)"; \
-    url=; \
-    case "${ARCH_NAME##*-}" in \
-        'amd64') \
-            OS_ARCH_SUFFIX=''; \
-            ;; \
-        'arm64') \
-            OS_ARCH_SUFFIX='-aarch64'; \
-            ;; \
-        *) echo >&2 "error: unsupported architecture: '$ARCH_NAME'"; exit 1 ;; \
-    esac; \
-    SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX" \
-    && SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz" \
-    && SWIFT_SIG_URL="$SWIFT_BIN_URL.sig" \
-    # - Grab curl here so we cache better up above
-    && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -q update && apt-get -q install -y curl && rm -rf /var/lib/apt/lists/* \
-    # - Download the GPG keys, Swift toolchain, and toolchain signature, and verify.
-    && export GNUPGHOME="$(mktemp -d)" \
-    && curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz "$SWIFT_SIG_URL" -o swift.tar.gz.sig \
-    && gpg --batch --quiet --keyserver keyserver.ubuntu.com --recv-keys "$SWIFT_SIGNING_KEY" \
-    && gpg --batch --verify swift.tar.gz.sig swift.tar.gz \
-    # - Unpack the toolchain, set libs permissions, and clean up.
-    && mkdir -p /workspaces/swift \
-    && tar -xzf swift.tar.gz --directory /workspaces/swift --strip-components=1 \
-    && chmod -R o+r /usr/lib/swift \
-    && rm -rf "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
-
+# Define paths
 ENV SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
-
-# Download LLVM headers
-RUN set -e; \
-    mkdir -p /workspaces/llvm \
-    && cd /workspaces/llvm \
-    && wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip \
-    && unzip llvm-swift.zip \
-    && rm -rf llvm-swift.zip
-
 ENV SWIFT_LLVM_DIR=/workspaces/llvm
-
-# Download Buildroot
+ENV BUILDROOT_DIR=/workspaces/buildroot
 ENV BUILDROOT_RELEASE=2022.08.1
 
-RUN set -e; \
-    cd /workspaces \
-    && wget "https://buildroot.org/downloads/buildroot-$BUILDROOT_RELEASE.tar.gz" \
-    && tar -xf "buildroot-$BUILDROOT_RELEASE.tar.gz" \
-    && mv "buildroot-$BUILDROOT_RELEASE" buildroot \
-    && rm -rf "buildroot-$BUILDROOT_RELEASE.tar.gz"
+# Install Dependencies
+COPY library-scripts/install-dependencies.sh /tmp/library-scripts/
+RUN apt-get update && \
+    /bin/bash /tmp/library-scripts/install-dependencies.sh \
+    && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
-ENV BUILDROOT_DIR=/workspaces/buildroot
+# Install Swift compiler
+COPY library-scripts/install-swift.sh /tmp/library-scripts/
+RUN /bin/bash /tmp/library-scripts/install-swift.sh \
+    && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
+
+# Download Buildroot
+COPY build-scripts/download-buildroot.sh /tmp/build-scripts/
+RUN /bin/bash /tmp/build-scripts/download-buildroot.sh \
+    && rm -rf /var/lib/apt/lists/* /tmp/build-scripts

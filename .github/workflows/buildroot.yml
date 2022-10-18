@@ -1,0 +1,40 @@
+name: Buildroot
+
+on: [push]
+
+jobs:
+    build:
+        name: Build Swift for Buildroot
+        strategy:
+          matrix:
+            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi"]
+        runs-on: ubuntu-22.04
+        container: swift:5.7-jammy
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Build
+          run: |
+            export SRC_ROOT=$GITHUB_WORKSPACE
+            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
+            export SWIFT_LLVM_DIR=/workspaces/llvm
+            export BUILDROOT_DIR=/workspaces/buildroot
+            export BUILDROOT_RELEASE=2022.08.1
+            export DEBIAN_FRONTEND=noninteractive 
+            export DEBCONF_NONINTERACTIVE_SEEN=true
+            apt update
+            $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
+            $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
+            $SRC_ROOT/.devcontainer/build-scripts/download-buildroot.sh
+            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: rootfs-tar
+            path: $BUILDROOT_DIR/output/images/rootfs.tar
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: rootfs-ext2
+            path: $BUILDROOT_DIR/output/images/rootfs.ext2
