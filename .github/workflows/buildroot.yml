@@ -7,8 +7,8 @@ jobs:
         name: Build Swift for Buildroot
         strategy:
           matrix:
-            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi"]
-        runs-on: ubuntu-22.04
+            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "olimex_imx233_olinuxino", "raspberrypi0w"]
+        runs-on: ubuntu-latest
         container: swift:5.7-jammy
         steps:
         - name: Checkout
@@ -31,10 +31,5 @@ jobs:
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
-            name: rootfs-tar
-            path: $BUILDROOT_DIR/output/images/rootfs.tar
-        - name: Archive Build artifacts
-          uses: actions/upload-artifact@v3
-          with:
             name: rootfs-ext2
-            path: $BUILDROOT_DIR/output/images/rootfs.ext2
+            path: /workspaces/buildroot/output/images/rootfs.ext2
