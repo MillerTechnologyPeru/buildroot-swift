@@ -29,7 +29,7 @@ endif
 ifeq ($(LIBDISPATCH_TARGET_ARCH),armv5)
 LIBDISPATCH_EXTRA_FLAGS		= -march=armv5te
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),riscv64)
-LIBDISPATCH_EXTRA_FLAGS		= -mno-relax -mabi=lp64 -march=rv64imac -mfloat-abi=soft
+LIBDISPATCH_EXTRA_FLAGS		= -mno-relax -mabi=lp64d -march=rv64imafd
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),mipsel)
 LIBDISPATCH_EXTRA_FLAGS		= -msoft-float
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),mips64el)
