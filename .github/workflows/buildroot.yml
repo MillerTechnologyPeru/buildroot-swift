@@ -9,7 +9,7 @@ jobs:
           matrix:
             config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "olimex_imx233_olinuxino", "raspberrypi0w"]
         runs-on: ubuntu-latest
-        container: swift:5.7-jammy
+        container: swift:5.7.1-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
