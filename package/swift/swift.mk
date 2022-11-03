@@ -70,6 +70,7 @@ SWIFT_CONF_OPTS = \
     -DCMAKE_CXX_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot $(STAGING_DIR) -latomic $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(STAGING_DIR)/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/ -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/$(GNU_TARGET_NAME)" \
     -DCMAKE_C_LINK_FLAGS="--sysroot $(STAGING_DIR) -latomic $(SWIFT_EXTRA_FLAGS)" \
     -DCMAKE_CXX_LINK_FLAGS="--sysroot $(STAGING_DIR) -latomic $(SWIFT_EXTRA_FLAGS)" \
+	-DCMAKE_Swift_COMPILER=$(SWIFT_NATIVE_PATH)/swiftc \
 	-DSWIFT_USE_LINKER=lld \
     -DLLVM_USE_LINKER=lld \
     -DLLVM_DIR=${SWIFT_LLVM_DIR}/lib/cmake/llvm \
