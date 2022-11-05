@@ -4,6 +4,7 @@ config BR2_PACKAGE_LIBDISPATCH_ARCH_SUPPORTS
 	default y if BR2_aarch64
 	default y if BR2_arm
 	default y if BR2_powerpc
+	default y if BR2_powerpc64le
 	default y if BR2_mips
 	default y if BR2_mipsel
 	default y if BR2_mips64
@@ -18,6 +19,7 @@ config BR2_PACKAGE_LIBDISPATCH_TARGET_ARCH
 	default "armv7" if BR2_ARM_CPU_ARMV7A
 	default "x86_64" if BR2_x86_64
 	default "powerpc" if BR2_powerpc
+	default "powerpc64le" if BR2_powerpc64le
 	default "mips" if BR2_mips
 	default "mipsel" if BR2_mipsel
 	default "mips64" if BR2_mips64
