@@ -1,14 +1,14 @@
 import Foundation
-#if canImport(Crypto)
-import Crypto
+#if canImport(Foundation)
+import Foundation
 #endif
 
 @main
 struct Hello {
     static func main() async throws {
         print("Hello, world! 👋")
-        #if canImport(Crypto)
-        print("Swift Crypto installed")
+        #if canImport(Foundation)
+        print("Swift Foundation installed")
         #endif
         let task = Task {
             var didCatchError = false
@@ -17,9 +17,9 @@ struct Hello {
             catch { fatalError() }
             print("Task ran")
         }
-        for _ in 0 ..< 10 {
+        for _ in 0 ..< 5 {
             print(UUID())
-            try await Task.sleep(1_000_000_000)
+            try await Task.sleep(nanoseconds: 500_000_000)
         }
     }
 }
