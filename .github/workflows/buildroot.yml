@@ -7,7 +7,7 @@ jobs:
         name: Build Swift for Buildroot
         strategy:
           matrix:
-            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "olimex_imx233_olinuxino", "raspberrypi0w", "qemu_ppc64le_pseries"]
+            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "qemu_x86", "olimex_imx233_olinuxino", "raspberrypi0w", "qemu_ppc64le_pseries"]
         runs-on: ubuntu-latest
         container: swift:5.7.1-jammy
         steps:
