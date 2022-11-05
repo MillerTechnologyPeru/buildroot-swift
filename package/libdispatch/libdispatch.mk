@@ -26,10 +26,12 @@ else
 LIBDISPATCH_TARGET_NAME		= $(LIBDISPATCH_TARGET_ARCH)-unknown-linux-gnu
 endif
 
-ifeq ($(LIBDISPATCH_TARGET_ARCH),armv5)
+ifeq ($(LIBDISPATCH_EXTRA_FLAGS),armv7)
+LIBDISPATCH_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
+else ifeq ($(LIBDISPATCH_TARGET_ARCH),armv5)
 LIBDISPATCH_EXTRA_FLAGS		= -march=armv5te
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),riscv64)
-LIBDISPATCH_EXTRA_FLAGS		= -mno-relax -mabi=lp64d -march=rv64imafd
+LIBDISPATCH_EXTRA_FLAGS		= -mno-relax -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI)) -mcpu=generic-rv64
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),mipsel)
 LIBDISPATCH_EXTRA_FLAGS		= -msoft-float
 else ifeq ($(LIBDISPATCH_TARGET_ARCH),mips64el)
