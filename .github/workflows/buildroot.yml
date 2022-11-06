@@ -31,5 +31,5 @@ jobs:
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
-            name: rootfs-ext2
-            path: /workspaces/buildroot/output/images/rootfs.ext2
+            name: build-${{ matrix.config }}
+            path: /workspaces/buildroot/output/images
