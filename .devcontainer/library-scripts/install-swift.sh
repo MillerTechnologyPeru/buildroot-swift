@@ -17,20 +17,17 @@ ARCH_NAME="$(dpkg --print-architecture)"; \
             ;; \
         *) echo >&2 "error: unsupported architecture: '$ARCH_NAME'"; exit 1 ;; \
     esac;
-
+ 
 SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX" 
-SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz" 
-SWIFT_SIG_URL="$SWIFT_BIN_URL.sig" 
-# - Download the GPG keys, Swift toolchain, and toolchain signature, and verify.
-export GNUPGHOME="$(mktemp -d)"
-curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz "$SWIFT_SIG_URL" -o swift.tar.gz.sig 
-gpg --batch --quiet --keyserver keyserver.ubuntu.com --recv-keys "$SWIFT_SIGNING_KEY"
-gpg --batch --verify swift.tar.gz.sig swift.tar.gz
+APPLE_SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz" 
+SWIFT_BIN_URL="${SWIFT_BIN_URL:=$APPLE_SWIFT_BIN_URL}"
+echo "Download $SWIFT_BIN_URL"
+curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz
 # - Unpack the toolchain, set libs permissions, and clean up.
 mkdir -p $SWIFT_NATIVE_TOOLS/../../ 
 tar -xzf swift.tar.gz --directory $SWIFT_NATIVE_TOOLS/../../ --strip-components=1 
 chmod -R o+r $SWIFT_NATIVE_TOOLS/../../usr/lib/swift 
-rm -rf "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
+rm -rf swift.tar.gz
 
 # Download LLVM headers
 mkdir -p $SWIFT_LLVM_DIR 
@@ -38,4 +35,3 @@ cd $SWIFT_LLVM_DIR
 wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip 
 unzip llvm-swift.zip 
 rm -rf llvm-swift.zip
-
