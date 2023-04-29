@@ -19,6 +19,7 @@ apt-get -q install -y \
     git \
     gzip \
     libncurses5-dev \
+    libedit-dev \
     make \
     mercurial \
     whois \
