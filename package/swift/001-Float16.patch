@@ -14,7 +14,7 @@ index 817739d4cdf..046327e491b 100644
  //
  //===----------------------------------------------------------------------===//
  
-+ #include "../SwiftShims/Visibility.h"
++ #include "swift/shims/Visibility.h"
 + #include <endian.h>
 + #include <stdint.h>
 + #include <climits>
