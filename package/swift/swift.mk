@@ -1,5 +1,5 @@
 ### Apple's Swift Programming Language
-SWIFT_VERSION = 5.7.1
+SWIFT_VERSION = 5.10
 SWIFT_SITE = $(call github,apple,swift,swift-$(SWIFT_VERSION)-RELEASE)
 SWIFT_LICENSE = Apache-2.0
 SWIFT_LICENSE_FILES = LICENSE.txt
@@ -86,7 +86,6 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_BUILD_SOURCEKIT=OFF \
     -DSWIFT_BUILD_STDLIB_EXTRA_TOOLCHAIN_CONTENT=OFF \
     -DSWIFT_BUILD_SYNTAXPARSERLIB=OFF \
-    -DSWIFT_BUILD_REMOTE_MIRROR=OFF \
     -DSWIFT_ENABLE_SOURCEKIT_TESTS=OFF \
     -DSWIFT_INCLUDE_DOCS=OFF \
     -DSWIFT_INCLUDE_TOOLS=OFF \
@@ -97,6 +96,12 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_LIBC_INCLUDE_DIRECTORY=${STAGING_DIR}/usr/include  \
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${LIBDISPATCH_SRCDIR} \
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
+	-DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF \
+	-DSWIFT_ENABLE_CXX_INTEROP_SWIFT_BRIDGING_HEADER=OFF \
+	-DSWIFT_BUILD_STDLIB_CXX_MODULE=OFF \
+	-DSWIFT_INCLUDE_TESTS=OFF \
+	-DSWIFT_INCLUDE_TEST_BINARIES=OFF \
+	-DSWIFT_BUILD_TEST_SUPPORT_MODULES=OFF \
 	-DZLIB_LIBRARY=$(STAGING_DIR)/usr/lib/libz.so \
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -168,8 +173,14 @@ define SWIFT_INSTALL_TARGET_CMDS
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
-	# Copy runtime libraries and swift interfaces
+	# Workaround disabled C++ module
+	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
+	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
+	# Copy runtime libraries and Swift interfaces
 	(cd $(SWIFT_BUILDDIR) && ninja install)
+	# Remove disabled C++ module
+	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
+	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
 endef
 
 HOST_SWIFT_SUPPORT_DIR=$(HOST_DIR)/usr/share/swift

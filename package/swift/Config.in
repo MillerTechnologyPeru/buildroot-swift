@@ -45,11 +45,11 @@ if BR2_PACKAGE_SWIFT || BR2_PACKAGE_LIBDISPATCH
 
 config BR2_PACKAGE_SWIFT_NATIVE_TOOLS
 	string "Path to host Swift toolchain"
-	default "/usr/bin"
+	default "/usr/local/bin"
 
 config BR2_PACKAGE_SWIFT_LLVM_DIR
 	string "Path to host LLVM library path"
-	default "/usr/lib/llvm-12"
+	default "/usr/lib/llvm-14"
 
 endif
 
