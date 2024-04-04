@@ -173,8 +173,14 @@ define SWIFT_INSTALL_TARGET_CMDS
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
-	# Copy runtime libraries and swift interfaces
+	# Workaround disabled C++ module
+	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
+	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
+	# Copy runtime libraries and Swift interfaces
 	(cd $(SWIFT_BUILDDIR) && ninja install)
+	# Remove disabled C++ module
+	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
+	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
 endef
 
 HOST_SWIFT_SUPPORT_DIR=$(HOST_DIR)/usr/share/swift
