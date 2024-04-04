@@ -19,7 +19,7 @@ jobs:
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
-            export BUILDROOT_RELEASE=2022.08.1
+            export BUILDROOT_RELEASE=2024.02.1
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-5.10-RELEASE/swift-5.10-Debian11-x86_64.tar.gz
@@ -52,7 +52,7 @@ jobs:
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
-            export BUILDROOT_RELEASE=2022.08.1
+            export BUILDROOT_RELEASE=2024.02.1
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-5.10-RELEASE/swift-5.10-Debian11-x86_64.tar.gz
