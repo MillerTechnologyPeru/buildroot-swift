@@ -1,5 +1,5 @@
 ### Apple's Swift Programming Language
-SWIFT_VERSION = 5.7.1
+SWIFT_VERSION = 5.10
 SWIFT_SITE = $(call github,apple,swift,swift-$(SWIFT_VERSION)-RELEASE)
 SWIFT_LICENSE = Apache-2.0
 SWIFT_LICENSE_FILES = LICENSE.txt
