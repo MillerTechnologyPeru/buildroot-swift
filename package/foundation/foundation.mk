@@ -69,17 +69,9 @@ define FOUNDATION_INSTALL_STAGING_CMDS
 	cp $(FOUNDATION_BUILDDIR)/lib/*.so $(STAGING_DIR)/usr/lib/swift/linux/
 	# Copy CoreFoundation module
 	mkdir -p ${STAGING_DIR}/usr/lib/swift/CoreFoundation
-	cp $(FOUNDATION_BUILDDIR)/CoreFoundation.framework/Headers/*.h ${STAGING_DIR}/usr/lib/swift/CoreFoundation/ 
+	cp $(FOUNDATION_SRCDIR)/Sources/CoreFoundation/include/*.h ${STAGING_DIR}/usr/lib/swift/CoreFoundation/ 
 	touch ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	echo 'framework module CoreFoundation [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CoreFoundation/CoreFoundation.h" }' > ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
-	# Copy CFXMLInterface module
-	mkdir -p ${STAGING_DIR}/usr/lib/swift/CFXMLInterface
-	touch ${STAGING_DIR}/usr/lib/swift/CFXMLInterface/module.map
-	echo 'framework module CFXMLInterface [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CFXMLInterface/CFXMLInterface.h" }' > ${STAGING_DIR}/usr/lib/swift/CFXMLInterface/module.map
-	# Copy CFURLSessionInterface module
-	mkdir -p ${STAGING_DIR}/usr/lib/swift/CFURLSessionInterface
-	touch ${STAGING_DIR}/usr/lib/swift/CFURLSessionInterface/module.map
-	echo 'framework module CFURLSessionInterface [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CFURLSessionInterface/CFURLSessionInterface.h" }' > ${STAGING_DIR}/usr/lib/swift/CFURLSessionInterface/module.map
 	# Copy Swift modules
 	cp $(FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/
 	# Restore Dispatch headers
