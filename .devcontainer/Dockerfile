@@ -29,7 +29,7 @@ RUN bash /tmp/library-scripts/node-debian.sh "${NVM_DIR}" "${NODE_VERSION}" "${U
 ENV SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
 ENV SWIFT_LLVM_DIR=/workspaces/llvm
 ENV BUILDROOT_DIR=/workspaces/buildroot
-ENV BUILDROOT_RELEASE=2024.02.1
+ENV BUILDROOT_RELEASE=2024.02.9
 
 # Install Dependencies
 COPY library-scripts/install-dependencies.sh /tmp/library-scripts/

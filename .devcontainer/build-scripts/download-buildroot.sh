@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BUILDROOT_RELEASE="${BUILDROOT_RELEASE:=2024.02.1}"
+BUILDROOT_RELEASE="${BUILDROOT_RELEASE:=2024.02.9}"
 BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
 
 cd /tmp/
