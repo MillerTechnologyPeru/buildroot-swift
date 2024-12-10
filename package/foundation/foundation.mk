@@ -13,19 +13,15 @@ FOUNDATION_CONF_OPTS += \
 	-DCMAKE_Swift_FLAGS_DEBUG="" \
 	-DCMAKE_Swift_FLAGS_RELEASE="" \
 	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-    -DCF_DEPLOYMENT_SWIFT=ON \
     -Ddispatch_DIR="$(LIBSWIFTDISPATCH_BUILDDIR)/cmake/modules" \
-    -DICU_I18N_LIBRARY_RELEASE=${STAGING_DIR}/usr/lib/libicui18n.so \
-    -DICU_UC_LIBRARY_RELEASE=${STAGING_DIR}/usr/lib/libicuuc.so \
-    -DICU_I18N_LIBRARY_DEBUG=${STAGING_DIR}/usr/lib/libicui18n.so \
-    -DICU_UC_LIBRARY_DEBUG=${STAGING_DIR}/usr/lib/libicuuc.so \
-    -DICU_INCLUDE_DIR="${STAGING_DIR}/usr/include" \
-	-DICU_DATA_LIBRARY_RELEASE=${STAGING_DIR}/usr/lib/libicudata.so \
 	-DCURL_LIBRARY_RELEASE=${STAGING_DIR}/usr/lib/libcurl.so \
 	-DCURL_LIBRARY_DEBUG=${STAGING_DIR}/usr/lib/libcurl.so \
     -DCURL_INCLUDE_DIR="${STAGING_DIR}/usr/include" \
 	-DLIBXML2_LIBRARY=${STAGING_DIR}/usr/lib/libxml2.so \
     -DLIBXML2_INCLUDE_DIR=${STAGING_DIR}/usr/include/libxml2 \
+	-DLibRT_LIBRARIES=${STAGING_DIR}/usr/lib/librt.a \
+	-DSwiftFoundation_MODULE_TRIPLE=${SWIFT_TARGET_NAME} \
+	-DSwiftFoundation_MACRO=${SWIFT_NATIVE_PATH}/../lib/swift/host/plugins \
 
 ifeq (FOUNDATION_SUPPORTS_IN_SOURCE_BUILD),YES)
 FOUNDATION_BUILDDIR			= $(FOUNDATION_SRCDIR)
