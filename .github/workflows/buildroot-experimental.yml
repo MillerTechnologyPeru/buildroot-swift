@@ -8,7 +8,7 @@ jobs:
           matrix:
             config: ["nezha"]
         runs-on: ubuntu-latest
-        container: swift:5.10-jammy
+        container: swift:6.0.2-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -22,7 +22,7 @@ jobs:
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-5.10-RELEASE/swift-5.10-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
             $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
@@ -41,7 +41,7 @@ jobs:
           matrix:
             config: ["qemu_ppc_mac99"]
         runs-on: ubuntu-latest
-        container: swift:5.10-jammy
+        container: swift:6.0.2-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -55,7 +55,7 @@ jobs:
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-5.10-RELEASE/swift-5.10-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
             $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
@@ -74,7 +74,7 @@ jobs:
           matrix:
             config: ["qemu_mips32r6el_malta", "qemu_mips64r6el_malta"]
         runs-on: ubuntu-latest
-        container: swift:5.10-jammy
+        container: swift:6.0.2-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -88,7 +88,7 @@ jobs:
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-5.10-RELEASE/swift-5.10-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
             $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
