@@ -1,6 +1,6 @@
 ### Apple's Swift Programming Language
 SWIFT_VERSION = 6.0.2
-SWIFT_SITE = $(call github,apple,swift,swift-$(SWIFT_VERSION)-RELEASE)
+SWIFT_SITE = $(call github,swiftlang,swift,swift-$(SWIFT_VERSION)-RELEASE)
 SWIFT_LICENSE = Apache-2.0
 SWIFT_LICENSE_FILES = LICENSE.txt
 SWIFT_TARGET_ARCH = $(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))
@@ -152,6 +152,11 @@ else
 endif
 
 define SWIFT_CONFIGURE_CMDS
+	# Fetch string processing sources
+	cd $(SWIFT_SRCDIR)/../
+	wget https://github.com/swiftlang/swift-experimental-string-processing/archive/refs/tags/swift-${SWIFT_VERSION}-RELEASE.tar.gz
+	tar -xvf swift-${SWIFT_VERSION}-RELEASE.tar.gz
+	rm -rf swift-${SWIFT_VERSION}-RELEASE.tar.gz
 	# Configure for Ninja
 	(mkdir -p $(SWIFT_BUILDDIR) && \
 	cd $(SWIFT_BUILDDIR) && \
