@@ -7,7 +7,7 @@ jobs:
         strategy:
           matrix:
             config: ["nezha"]
-        runs-on: ubuntu-latest
+        runs-on: Linux
         container: swift:6.0.2-jammy
         steps:
         - name: Checkout
