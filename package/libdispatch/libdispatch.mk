@@ -1,6 +1,6 @@
 ### Grand Central Dispatch
-LIBDISPATCH_VERSION = 5.10
-LIBDISPATCH_SITE = $(call github,apple,swift-corelibs-libdispatch,swift-$(LIBDISPATCH_VERSION)-RELEASE)
+LIBDISPATCH_VERSION = 6.0.2
+LIBDISPATCH_SITE = $(call github,swiftlang,swift-corelibs-libdispatch,swift-$(LIBDISPATCH_VERSION)-RELEASE)
 LIBDISPATCH_LICENSE = Apache-2.0
 LIBDISPATCH_LICENSE_FILES = LICENSE
 LIBDISPATCH_INSTALL_STAGING = YES
