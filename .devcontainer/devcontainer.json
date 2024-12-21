@@ -6,9 +6,11 @@
 		"dockerfile": "Dockerfile",
 		"args": {
 			// Update the VARIANT arg to pick a Swift version 
-			"VARIANT": "6.0.2-jammy",
+			"VARIANT": "6.0.3-jammy",
 			// Options
-			"NODE_VERSION": "lts/*"
+			"NODE_VERSION": "lts/*",
+			// Buildroot Config
+			"DEFCONFIG": "imx6slevk_swift_defconfig"
 		}
 	},
 	"runArgs": [

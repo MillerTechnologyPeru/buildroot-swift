@@ -1,9 +1,10 @@
 # [Choice] Swift version: 5.6-focal, 5.5, 5.4, 5.3, 5.2, 5.1, 4.2
-ARG VARIANT=6.0.2-jammy
+ARG VARIANT=6.0.3-jammy
 FROM swift:${VARIANT}
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
+
 # [Option] Upgrade OS packages to their latest versions
 ARG UPGRADE_PACKAGES="false"
 
@@ -46,3 +47,4 @@ RUN /bin/bash /tmp/library-scripts/install-swift.sh \
 COPY build-scripts/download-buildroot.sh /tmp/build-scripts/
 RUN /bin/bash /tmp/build-scripts/download-buildroot.sh \
     && rm -rf /var/lib/apt/lists/* /tmp/build-scripts
+
