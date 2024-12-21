@@ -20,5 +20,5 @@ echo "COPY .devcontainer/build-scripts/build-base.sh /tmp/build-scripts/" >> $DO
 echo "RUN /bin/bash /tmp/build-scripts/build-base.sh" >> $DOCKER_FILE_ARCH
 
 # Build Docker image
-docker build -t colemancda/buildroot-swift-$DEFCONFIG --file $DOCKER_FILE_ARCH .
-docker push colemancda/buildroot-swift-$DEFCONFIG
+docker build -t colemancda/buildroot-swift:$DEFCONFIG --file $DOCKER_FILE_ARCH .
+docker push colemancda/buildroot-swift:$DEFCONFIG
