@@ -8,13 +8,13 @@ jobs:
           matrix:
             config: ["nezha"]
         runs-on: Linux
-        container: swift:6.0.2-jammy
+        container: swift:6.0.3-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
-            export SRC_ROOT=$GITHUB_WORKSPACE
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
             export DEFCONFIG=${{ matrix.config }}_swift_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
@@ -24,11 +24,11 @@ jobs:
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
-            $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
-            $SRC_ROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SRC_ROOT/package/swift/extra-patches/002-RISCV64.patch $SRC_ROOT/package/swift/002-RISCV64.patch
-            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
+            cp $SWIFT_BUILDROOT/package/swift/extra-patches/002-RISCV64.patch $SWIFT_BUILDROOT/package/swift/002-RISCV64.patch
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
@@ -41,13 +41,13 @@ jobs:
           matrix:
             config: ["qemu_ppc_mac99"]
         runs-on: ubuntu-latest
-        container: swift:6.0.2-jammy
+        container: swift:6.0.3-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
-            export SRC_ROOT=$GITHUB_WORKSPACE
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
             export DEFCONFIG=${{ matrix.config }}_swift_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
@@ -57,11 +57,11 @@ jobs:
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
-            $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
-            $SRC_ROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SRC_ROOT/package/swift/extra-patches/003-PowerPC.patch $SRC_ROOT/package/swift/003-PowerPC.patch
-            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
+            cp $SWIFT_BUILDROOT/package/swift/extra-patches/003-PowerPC.patch $SWIFT_BUILDROOT/package/swift/003-PowerPC.patch
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
@@ -74,13 +74,13 @@ jobs:
           matrix:
             config: ["qemu_mips32r6el_malta", "qemu_mips64r6el_malta"]
         runs-on: ubuntu-latest
-        container: swift:6.0.2-jammy
+        container: swift:6.0.3-jammy
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
-            export SRC_ROOT=$GITHUB_WORKSPACE
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
             export DEFCONFIG=${{ matrix.config }}_swift_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
@@ -90,11 +90,11 @@ jobs:
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.2-RELEASE/swift-6.0.2-Debian11-x86_64.tar.gz
             apt update
-            $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
-            $SRC_ROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SRC_ROOT/package/swift/extra-patches/004-MIPS.patch $SRC_ROOT/package/swift/004-MIPS.patch
-            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
+            cp $SWIFT_BUILDROOT/package/swift/extra-patches/004-MIPS.patch $SWIFT_BUILDROOT/package/swift/004-MIPS.patch
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
