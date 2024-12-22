@@ -22,6 +22,8 @@ echo "COPY .devcontainer/build-scripts/fetch-sources.sh /tmp/build-scripts/" >> 
 echo "RUN /bin/bash /tmp/build-scripts/fetch-sources.sh" >> $DOCKER_FILE_ARCH
 echo "COPY .devcontainer/build-scripts/build-host-tools.sh /tmp/build-scripts/" >> $DOCKER_FILE_ARCH
 echo "RUN /bin/bash /tmp/build-scripts/build-host-tools.sh" >> $DOCKER_FILE_ARCH
+echo "COPY .devcontainer/build-scripts/build-toolchain.sh /tmp/build-scripts/" >> $DOCKER_FILE_ARCH
+echo "RUN /bin/bash /tmp/build-scripts/build-toolchain.sh" >> $DOCKER_FILE_ARCH
 echo "COPY .devcontainer/build-scripts/build-base.sh /tmp/build-scripts/" >> $DOCKER_FILE_ARCH
 echo "RUN /bin/bash /tmp/build-scripts/build-base.sh" >> $DOCKER_FILE_ARCH
 
