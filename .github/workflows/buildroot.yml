@@ -5,16 +5,16 @@ jobs:
         name: Build Swift for Buildroot
         strategy:
           matrix:
-            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "qemu_x86", "olimex_imx233_olinuxino", "raspberrypi0w", "qemu_ppc64le_pseries"]
+            config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
         runs-on: ubuntu-latest
-        container: colemancda/buildroot-swift:${{ matrix.config }}_swift_defconfig
+        container: colemancda/buildroot-swift:swift_${{ matrix.config }}_defconfig
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot

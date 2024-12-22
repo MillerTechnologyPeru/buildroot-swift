@@ -10,7 +10,7 @@
 			// Options
 			"NODE_VERSION": "lts/*",
 			// Buildroot Config
-			"DEFCONFIG": "imx6slevk_swift_defconfig"
+			"DEFCONFIG": "swift_arm64_defconfig"
 		}
 	},
 	"runArgs": [

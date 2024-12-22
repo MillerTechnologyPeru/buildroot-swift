@@ -3,7 +3,7 @@ set -e
 
 # Configurable
 SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
-DEFCONFIG="${DEFCONFIG:=imx6slevk_swift_defconfig}"
+DEFCONFIG="${DEFCONFIG:=swift_arm64_defconfig}"
 BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
 SWIFT_NATIVE_TOOLS="${SWIFT_NATIVE_TOOLS:=/workspaces/swift/usr/bin}"
 SWIFT_LLVM_DIR="${SWIFT_LLVM_DIR:=/workspaces/llvm}"

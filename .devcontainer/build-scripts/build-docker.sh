@@ -3,7 +3,7 @@ set -e
 
 # Configurable
 SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
-DEFCONFIG="${DEFCONFIG:=imx6slevk_swift_defconfig}"
+DEFCONFIG="${DEFCONFIG:=swift_arm64_defconfig}"
 
 # Create Dockerfile
 DOCKER_FILE_ARCH=$SWIFT_BUILDROOT/.devcontainer/Dockerfile-$DEFCONFIG
