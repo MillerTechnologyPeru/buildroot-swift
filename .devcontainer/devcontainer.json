@@ -32,7 +32,8 @@
 			"extensions": [
 				"sswg.swift-lang",
 				"ms-vscode.cmake-tools",
-				"ms-vscode.makefile-tools"
+				"ms-vscode.makefile-tools",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	},
