@@ -21,4 +21,6 @@ cd $BUILDROOT_DIR
 make BR2_EXTERNAL=$SWIFT_BUILDROOT tmp_$DEFCONFIG
 rm -rf $DEFCONFIG_FILE_COPY
 make source
+make swift-build
+make foundation-build
 make
