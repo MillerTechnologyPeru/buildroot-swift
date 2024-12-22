@@ -3,24 +3,18 @@ set -e
 
 # Configurable
 SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
-DEFCONFIG="${DEFCONFIG:=imx6slevk_swift_defconfig}"
+DEFCONFIG="${DEFCONFIG:=swift_arm64_defconfig}"
 BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
 SWIFT_NATIVE_TOOLS="${SWIFT_NATIVE_TOOLS:=/workspaces/swift/usr/bin}"
 SWIFT_LLVM_DIR="${SWIFT_LLVM_DIR:=/workspaces/llvm}"
 
-# Modify defconfig
-DEFCONFIG_FILE=$SWIFT_BUILDROOT/configs/$DEFCONFIG
-DEFCONFIG_FILE_COPY=$SWIFT_BUILDROOT/configs/tmp_$DEFCONFIG
-cp -rf $DEFCONFIG_FILE $DEFCONFIG_FILE_COPY
-echo "BR2_PACKAGE_SWIFT_HELLO=y" >> $DEFCONFIG_FILE_COPY
-echo "BR2_PACKAGE_SWIFT_NATIVE_TOOLS=\"${SWIFT_NATIVE_TOOLS}\"" >> $DEFCONFIG_FILE_COPY
-echo "BR2_PACKAGE_SWIFT_LLVM_DIR=\"${SWIFT_LLVM_DIR}\"" >> $DEFCONFIG_FILE_COPY
+# Prepare environment
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/configure.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/fetch-sources.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-tools.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-toolchain.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-base.sh
 
-# Build
+# Build Swift
 cd $BUILDROOT_DIR
-make BR2_EXTERNAL=$SWIFT_BUILDROOT tmp_$DEFCONFIG
-rm -rf $DEFCONFIG_FILE_COPY
-make source
-make swift-build
-make foundation-build
 make
