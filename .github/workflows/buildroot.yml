@@ -5,27 +5,23 @@ jobs:
         name: Build Swift for Buildroot
         strategy:
           matrix:
-            config: ["imx6slevk", "aarch64_efi", "pc_x86_64_efi", "qemu_x86", "olimex_imx233_olinuxino", "raspberrypi0w", "qemu_ppc64le_pseries"]
-        runs-on: Linux
-        container: swift:6.0.2-jammy
+            config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
+        runs-on: ubuntu-latest
+        container: colemancda/buildroot-swift:swift_${{ matrix.config }}_defconfig
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
-            export SRC_ROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            apt update
-            $SRC_ROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SRC_ROOT/.devcontainer/library-scripts/install-swift.sh
-            $SRC_ROOT/.devcontainer/build-scripts/download-buildroot.sh
-            $SRC_ROOT/.devcontainer/build-scripts/build.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:

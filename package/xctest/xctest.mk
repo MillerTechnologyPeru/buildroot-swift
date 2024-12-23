@@ -1,5 +1,5 @@
 ### XCTest
-XCTEST_VERSION = 6.0.2
+XCTEST_VERSION = 6.0.3
 XCTEST_SITE = $(call github,swiftlang,swift-corelibs-xctest,swift-$(XCTEST_VERSION)-RELEASE)
 XCTEST_LICENSE = Apache-2.0
 XCTEST_LICENSE_FILES = LICENSE

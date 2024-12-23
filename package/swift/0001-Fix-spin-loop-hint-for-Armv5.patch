@@ -1,0 +1,25 @@
+From 36a439452936f26cc0ac5ac3b4ea9c0f0300f2ce Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Dec 2024 23:07:53 -0500
+Subject: [PATCH] Fix spin loop hint for Armv5
+
+---
+ stdlib/public/Synchronization/Mutex/SpinLoopHint.swift | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/stdlib/public/Synchronization/Mutex/SpinLoopHint.swift b/stdlib/public/Synchronization/Mutex/SpinLoopHint.swift
+index 0084e1d0568..e669f1e2117 100644
+--- a/stdlib/public/Synchronization/Mutex/SpinLoopHint.swift
++++ b/stdlib/public/Synchronization/Mutex/SpinLoopHint.swift
+@@ -77,7 +77,7 @@ var _tries: Int {
+ 
+ @inline(__always)
+ func _spinLoopHint() {
+-#if arch(arm) || arch(arm64) || arch(arm64_32)
++#if arch(arm64) || arch(arm64_32)
+   _wfe()
+ #elseif arch(i386) || arch(x86_64)
+   _pause()
+-- 
+2.39.5 (Apple Git-154)
+
