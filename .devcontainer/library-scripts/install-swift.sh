@@ -41,14 +41,14 @@ fi
 # Download LLVM headers
 if [ ! -d "$SWIFT_LLVM_DIR" ]; then
     mkdir -p $SWIFT_LLVM_DIR 
-    cd $SWIFT_LLVM_DIR 
+    cd $SWIFT_LLVM_DIR
     wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip 
     unzip llvm-swift.zip 
     rm -rf llvm-swift.zip
+    SWIFT_LLVM_BUILD_DIR=$HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/llvm-linux-$(uname -m)
+    mkdir -p $SWIFT_LLVM_BUILD_DIR
+    cp -rf $SWIFT_LLVM_DIR/* $SWIFT_LLVM_BUILD_DIR/
 fi
-
-SWIFT_LLVM_BUILD_DIR=$HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/llvm-linux-$(uname -m)
-mkdir -p $SWIFT_LLVM_BUILD_DIR
 
 # Clone Swift StdLib dependencies
 mkdir -p $HOST_SWIFT_SRCDIR/swift-source
