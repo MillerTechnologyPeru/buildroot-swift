@@ -35,23 +35,10 @@ config BR2_PACKAGE_SWIFT
 	depends on !BR2_STATIC_LIBS
 	depends on BR2_TOOLCHAIN_USES_GLIBC
 	select BR2_PACKAGE_ICU
-	select BR2_PACKAGE_LIBDISPATCH
 	help
 	  Swift is a general-purpose programming language built using a modern approach to safety, performance, and software design patterns.
 
 	  http://swift.org
-
-if BR2_PACKAGE_SWIFT || BR2_PACKAGE_LIBDISPATCH
-
-config BR2_PACKAGE_SWIFT_NATIVE_TOOLS
-	string "Path to host Swift toolchain"
-	default "/usr/local/bin"
-
-config BR2_PACKAGE_SWIFT_LLVM_DIR
-	string "Path to host LLVM library path"
-	default "/usr/lib/llvm-14"
-
-endif
 
 comment "swift needs a toolchain w/ Glibc, ICU, wchar, threads, C++, dynamic library"
 	depends on BR2_PACKAGE_SWIFT_ARCH_SUPPORTS
