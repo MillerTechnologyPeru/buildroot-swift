@@ -28,6 +28,7 @@ RUN apt-get update && \
 # Create folder
 RUN mkdir -p /workspaces && chown -R vscode:vscode /workspaces
 RUN mkdir -p /tmp/build-scripts && chown -R vscode:vscode /tmp/build-scripts
+RUN mkdir -p /tmp/library-scripts && chown -R vscode:vscode /tmp/library-scripts
 
 # Run as user
 USER vscode
@@ -50,7 +51,7 @@ COPY build-scripts/build-host-tools.sh /tmp/build-scripts/
 RUN /bin/bash /tmp/build-scripts/build-host-tools.sh && rm /tmp/build-scripts/build-host-tools.sh
 
 # Install Swift
-COPY library-scripts/install-swift.sh /tmp/build-scripts/
+COPY library-scripts/install-swift.sh /tmp/library-scripts/
 RUN /bin/bash /tmp/library-scripts/install-swift.sh && rm /tmp/library-scripts/install-swift.sh
 
 # Remove config
