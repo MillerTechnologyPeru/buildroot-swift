@@ -6,28 +6,27 @@ jobs:
         name: Build Swift for Buildroot (riscv64)
         strategy:
           matrix:
-            config: ["nezha"]
+            config: ["riscv64"]
         runs-on: Linux
-        container: swift:6.0.3-jammy
+        container: swift:6.0.3-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SWIFT_BUILDROOT/package/swift/extra-patches/002-RISCV64.patch $SWIFT_BUILDROOT/package/swift/002-RISCV64.patch
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
@@ -39,28 +38,27 @@ jobs:
         name: Build Swift for Buildroot (powerpc)
         strategy:
           matrix:
-            config: ["qemu_ppc_mac99"]
+            config: ["ppc"]
         runs-on: ubuntu-latest
-        container: swift:6.0.3-jammy
+        container: swift:6.0.3-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SWIFT_BUILDROOT/package/swift/extra-patches/003-PowerPC.patch $SWIFT_BUILDROOT/package/swift/003-PowerPC.patch
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
@@ -72,28 +70,27 @@ jobs:
         name: Build Swift for Buildroot (mips)
         strategy:
           matrix:
-            config: ["qemu_mips32r6el_malta", "qemu_mips64r6el_malta"]
+            config: ["mips", "mips64"]
         runs-on: ubuntu-latest
-        container: swift:6.0.3-jammy
+        container: swift:6.0.3-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=${{ matrix.config }}_swift_defconfig
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
             export SWIFT_LLVM_DIR=/workspaces/llvm
             export BUILDROOT_DIR=/workspaces/buildroot
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-Debian11-x86_64.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            cp $SWIFT_BUILDROOT/package/swift/extra-patches/004-MIPS.patch $SWIFT_BUILDROOT/package/swift/004-MIPS.patch
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
