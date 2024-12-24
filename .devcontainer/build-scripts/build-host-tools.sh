@@ -7,6 +7,7 @@ BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
 # Build
 cd $BUILDROOT_DIR
 make host-cmake-build
+make host-ninja-build
 make host-util-linux-build
 make host-libtool-build
 make host-autoconf-build

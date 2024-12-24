@@ -8,7 +8,7 @@ SWIFT_INSTALL_STAGING = YES
 SWIFT_INSTALL_TARGET = YES
 SWIFT_SUPPORTS_IN_SOURCE_BUILD = NO
 SWIFT_BUILDDIR = $(SWIFT_SRCDIR)/build
-SWIFT_DEPENDENCIES = host-swift host-cmake icu libxml2 libbsd libedit zstd
+SWIFT_DEPENDENCIES = host-swift host-cmake host-ninja icu libxml2 libbsd libedit zstd
 
 HOST_SWIFT_BUILDDIR = $(HOST_SWIFT_SRCDIR)/build
 SWIFT_NATIVE_PATH = $(HOST_SWIFT_BUILDDIR)/usr/bin
