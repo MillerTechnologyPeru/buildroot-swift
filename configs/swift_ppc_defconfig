@@ -13,7 +13,6 @@ BR2_TARGET_GENERIC_HOSTNAME="swift-linux"
 BR2_TARGET_GENERIC_ISSUE="Welcome to Swift Linux"
 
 # Swift Runtime Libraries
-BR2_PACKAGE_LIBDISPATCH=y
 BR2_PACKAGE_SWIFT=y
 
 # Dependencies
