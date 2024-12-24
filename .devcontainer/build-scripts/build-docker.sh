@@ -5,8 +5,12 @@ set -e
 SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
 DEFCONFIG="${DEFCONFIG:=swift_arm64_defconfig}"
 
-# Create Dockerfile
-DOCKER_FILE_ARCH=$SWIFT_BUILDROOT/.devcontainer/Dockerfile-$DEFCONFIG
+# Build and push base docker image
+DOCKER_FILE=$SWIFT_BUILDROOT/.devcontainer/Dockerfile
+docker build -t colemancda/buildroot-swift --file $DOCKER_FILE .devcontainer
+
+# Create arch-specific Dockerfile
+DOCKER_FILE_ARCH=$DOCKER_FILE-$DEFCONFIG
 rm -rf $DOCKER_FILE_ARCH
 echo "FROM colemancda/buildroot-swift" >> $DOCKER_FILE_ARCH
 echo "ENV DEFCONFIG=${DEFCONFIG}" >> $DOCKER_FILE_ARCH
@@ -29,4 +33,5 @@ echo "RUN /bin/bash /tmp/build-scripts/build-base.sh" >> $DOCKER_FILE_ARCH
 
 # Build Docker image
 docker build -t colemancda/buildroot-swift:$DEFCONFIG --file $DOCKER_FILE_ARCH .
+docker push colemancda/buildroot-swift
 docker push colemancda/buildroot-swift:$DEFCONFIG
