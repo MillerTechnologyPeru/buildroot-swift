@@ -49,5 +49,9 @@ RUN /bin/bash /tmp/build-scripts/fetch-sources.sh
 COPY build-scripts/build-host-tools.sh /tmp/build-scripts/
 RUN /bin/bash /tmp/build-scripts/build-host-tools.sh && rm /tmp/build-scripts/build-host-tools.sh
 
+# Install Swift
+COPY library-scripts/install-swift.sh /tmp/build-scripts/
+RUN /bin/bash /tmp/library-scripts/install-swift.sh && rm /tmp/library-scripts/install-swift.sh
+
 # Remove config
 RUN rm -rf /workspaces/buildroot/.config
