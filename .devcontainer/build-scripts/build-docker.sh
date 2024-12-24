@@ -14,8 +14,6 @@ DOCKER_FILE_ARCH=$DOCKER_FILE-$DEFCONFIG
 rm -rf $DOCKER_FILE_ARCH
 echo "FROM colemancda/buildroot-swift" >> $DOCKER_FILE_ARCH
 echo "ENV DEFCONFIG=${DEFCONFIG}" >> $DOCKER_FILE_ARCH
-echo "ENV SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin" >> $DOCKER_FILE_ARCH
-echo "ENV SWIFT_LLVM_DIR=/workspaces/llvm" >> $DOCKER_FILE_ARCH
 echo "ENV SWIFT_BUILDROOT=/workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
 echo "ENV BUILDROOT_RELEASE=2024.02.9" >> $DOCKER_FILE_ARCH
 echo "ENV BUILDROOT_DIR=/workspaces/buildroot" >> $DOCKER_FILE_ARCH

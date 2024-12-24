@@ -6,7 +6,6 @@ BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
 
 # Build
 cd $BUILDROOT_DIR
-make host-swift-build
 make host-cmake-build
 make host-util-linux-build
 make host-libtool-build
