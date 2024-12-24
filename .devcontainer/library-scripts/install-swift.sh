@@ -47,6 +47,9 @@ if [ ! -d "$SWIFT_LLVM_DIR" ]; then
     rm -rf llvm-swift.zip
 fi
 
+SWIFT_LLVM_BUILD_DIR=$HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/llvm-linux-$(uname -m)
+mkdir -p $SWIFT_LLVM_BUILD_DIR
+
 # Clone Swift StdLib dependencies
 mkdir -p $HOST_SWIFT_SRCDIR/swift-source
 cd $HOST_SWIFT_SRCDIR/swift-source
