@@ -16,10 +16,6 @@ jobs:
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
             export DEFCONFIG=swift_${{ matrix.config }}_defconfig
-            export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
-            export SWIFT_LLVM_DIR=/workspaces/llvm
-            export BUILDROOT_DIR=/workspaces/buildroot
-            export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
             export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
