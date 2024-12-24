@@ -27,33 +27,38 @@ ARCH_NAME="$(dpkg --print-architecture)"; \
 SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX" 
 APPLE_SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz" 
 SWIFT_BIN_URL="${SWIFT_BIN_URL:=$APPLE_SWIFT_BIN_URL}"
-echo "Download $SWIFT_BIN_URL"
-curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz
-# - Unpack the toolchain, set libs permissions, and clean up.
-mkdir -p $SWIFT_NATIVE_TOOLS/../../ 
-tar -xzf swift.tar.gz --directory $SWIFT_NATIVE_TOOLS/../../ --strip-components=1 
-chmod -R o+r $SWIFT_NATIVE_TOOLS/../../usr/lib/swift 
-rm -rf swift.tar.gz
+if [ ! -d "$SWIFT_NATIVE_TOOLS" ]; then
+    echo "Download $SWIFT_BIN_URL"
+    cd /tmp
+    curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz
+    # - Unpack the toolchain, set libs permissions, and clean up.
+    mkdir -p $HOST_SWIFT_BUILDDIR
+    tar -xzf swift.tar.gz --directory $HOST_SWIFT_BUILDDIR --strip-components=1 
+    rm -rf swift.tar.gz
+    chmod -R o+r $HOST_SWIFT_BUILDDIR/usr/lib/swift 
+fi
 
 # Download LLVM headers
-mkdir -p $SWIFT_LLVM_DIR 
-cd $SWIFT_LLVM_DIR 
-wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip 
-unzip llvm-swift.zip 
-rm -rf llvm-swift.zip
+if [ ! -d "$SWIFT_LLVM_DIR" ]; then
+    mkdir -p $SWIFT_LLVM_DIR 
+    cd $SWIFT_LLVM_DIR 
+    wget https://github.com/colemancda/swift-armv7/releases/download/0.4.0/llvm-swift.zip 
+    unzip llvm-swift.zip 
+    rm -rf llvm-swift.zip
+fi
 
-# Clone required repos
+# Clone Swift StdLib dependencies
+mkdir -p $HOST_SWIFT_SRCDIR/swift-source
 cd $HOST_SWIFT_SRCDIR/swift-source
-git clone https://github.com/swiftlang/swift-corelibs-libdispatch.git
-cd swift-corelibs-libdispatch
-git checkout $SWIFT_VERSION
-cd ../
-git clone https://github.com/swiftlang/swift-experimental-string-processing.git
-cd swift-experimental-string-processing
-git checkout $SWIFT_VERSION
-cd ../
-
-# Mark as installed
-mkdir -p $HOST_SWIFT_SRCDIR
-touch $HOST_SWIFT_SRCDIR/.stamp_built
-touch $HOST_SWIFT_SRCDIR/.stamp_configured
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-corelibs-libdispatch" ]; then
+    git clone https://github.com/swiftlang/swift-corelibs-libdispatch.git
+    cd swift-corelibs-libdispatch
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-experimental-string-processing" ]; then
+    git clone https://github.com/swiftlang/swift-experimental-string-processing.git
+    cd swift-experimental-string-processing
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
