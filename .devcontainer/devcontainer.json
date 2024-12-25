@@ -3,15 +3,7 @@
 {
 	"name": "Swift",
 	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			// Update the VARIANT arg to pick a Swift version 
-			"VARIANT": "6.0.3-bookworm",
-			// Options
-			"NODE_VERSION": "lts/*",
-			// Buildroot Config
-			"DEFCONFIG": "swift_arm64_defconfig"
-		}
+		"dockerfile": "Dockerfile"
 	},
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
