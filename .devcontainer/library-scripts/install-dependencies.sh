@@ -26,6 +26,7 @@ apt-get -q install -y \
     patch \
     perl \
     python3 \
+    python3-distutils \
     rsync \
     sed \
     tar \
