@@ -11,6 +11,7 @@ jobs:
     - name: Build
       run: |
         export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+        $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
         $SWIFT_BUILDROOT/.devcontainer/build-scripts/generate-host-tar.sh
     - name: Archive Build artifacts
       uses: actions/upload-artifact@v3

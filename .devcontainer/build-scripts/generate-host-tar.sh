@@ -7,10 +7,10 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build host tools
 cd $WORKING_DIR
-$SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/configure.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/fetch-sources.sh
-$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-swift.sh
+$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-tools.sh
 
 # Cleanup Swift installable package
 rm -rf $HOST_SWIFT_SRCDIR/build/swift.tar.gz
@@ -87,7 +87,5 @@ rm -rf $HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/unified-swiftpm-buil
 rm -rf $HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/xctest-linux-x86_64
 
 # Generate tarball
-OUTPUT_DIR=$WORKING_DIR/output
-OUTPUT_TARBALL=$WORKING_DIR/host-tools.tar.gz
 cd $WORKING_DIR
-tar -czvf $OUTPUT_TARBALL $OUTPUT_DIR
+tar -czvf ./host-tools.tar.gz ./output
