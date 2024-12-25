@@ -199,13 +199,13 @@ define HOST_SWIFT_CONFIGURE_CMDS
 	mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source
 	cd $(HOST_SWIFT_SRCDIR)/swift-source
 	git clone https://github.com/swiftlang/swift.git
-	./swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE
+	$(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE
 endef
 
 define HOST_SWIFT_BUILD_CMDS
 	cd $(HOST_SWIFT_SRCDIR)/swift-source
 	# Build
-	./swift/utils/build-script --preset=buildbot_linux,no_test install_destdir=$(HOST_SWIFT_BUILDDIR)
+	$(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script --preset=buildbot_linux,no_test install_destdir=$(HOST_SWIFT_BUILDDIR) installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz
 endef
 
 define HOST_SWIFT_INSTALL_CMDS
