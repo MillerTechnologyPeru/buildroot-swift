@@ -15,5 +15,4 @@ $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-base.sh
 
 # Build Swift
 cd $WORKING_DIR
-
 make $BUILDROOT_OPTIONS
