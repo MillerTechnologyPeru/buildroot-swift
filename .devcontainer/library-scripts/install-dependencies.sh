@@ -44,4 +44,5 @@ apt-get -q install -y \
     pkg-config \
     uuid-dev \
     tzdata \
-    libstdc++-12-dev
+    libstdc++-12-dev \
+    clang \
