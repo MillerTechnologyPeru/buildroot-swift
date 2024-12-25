@@ -7,19 +7,18 @@ jobs:
           matrix:
             config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
         runs-on: ubuntu-latest
-        container: colemancda/buildroot-swift:swift_${{ matrix.config }}_defconfig
+        container: colemancda/buildroot-swift
         steps:
         - name: Checkout
           uses: actions/checkout@v3
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
-            export DEBIAN_FRONTEND=noninteractive 
-            export DEBCONF_NONINTERACTIVE_SEEN=true
+            export SWIFT_TARGET_ARCH=${{ matrix.config }}
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:
             name: build-${{ matrix.config }}
-            path: /workspaces/buildroot/output/images
+            path: /workspaces/buildroot/output/
