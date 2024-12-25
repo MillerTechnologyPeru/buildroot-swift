@@ -1,4 +1,4 @@
-FROM debian:12
+FROM swift:6.0.3-bookworm
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
