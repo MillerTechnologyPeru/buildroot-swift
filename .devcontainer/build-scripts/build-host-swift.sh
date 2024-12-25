@@ -7,5 +7,4 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build
 cd $WORKING_DIR
-
 make $BUILDROOT_OPTIONS host-swift-build

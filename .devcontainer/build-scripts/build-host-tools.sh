@@ -7,7 +7,6 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build
 cd $WORKING_DIR
-
 make $BUILDROOT_OPTIONS host-cmake-build
 make $BUILDROOT_OPTIONS host-ninja-build
 make $BUILDROOT_OPTIONS host-util-linux-build
