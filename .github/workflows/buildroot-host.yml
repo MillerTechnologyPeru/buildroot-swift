@@ -1,0 +1,49 @@
+name: Buildroot Host
+on: [push]
+jobs:
+  build-host-tools:
+    name: Build Host Tools
+    runs-on: [linux, x64]
+    container: colemancda/buildroot-swift
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Build
+      run: |
+        export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+        $SWIFT_BUILDROOT/.devcontainer/build-scripts/generate-host-tar.sh
+    - name: Archive Build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-host-tools
+        path: ./host-tools.tar.gz
+  
+  build-toolchain:
+        name: Build Toolchain for Buildroot
+        strategy:
+          matrix:
+            config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
+        runs-on: [linux, x64]
+        container: colemancda/buildroot-swift
+        needs: build-host-tools
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Download Artifacts
+          uses: actions/download-artifact@v4
+        - name: Build
+          run: |
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+            export SWIFT_TARGET_ARCH=${{ matrix.config }}
+            tar -xvf ./host-tools.tar.gz
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/configure.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/fetch-sources.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-tools.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-swift.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-toolchain.sh
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build-${{ matrix.config }}
+            path: ./output/${{ matrix.config }}
