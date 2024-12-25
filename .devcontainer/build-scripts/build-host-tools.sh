@@ -1,20 +1,22 @@
 #!/bin/bash
 set -e
 
-# Paths
-BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
+# Configurable
+SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
+source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build
-cd $BUILDROOT_DIR
-make host-cmake-build
-make host-ninja-build
-make host-util-linux-build
-make host-libtool-build
-make host-autoconf-build
-make host-automake-build
-make host-libzlib-build
-make host-zlib-build
-make host-attr-build
-make host-acl-build
-make host-fakeroot-build
-make host-dosfstools-build
+cd $WORKING_DIR
+export $BR2_DL_DIR
+make $BUILDROOT_OPTIONS host-cmake-build
+make $BUILDROOT_OPTIONS host-ninja-build
+make $BUILDROOT_OPTIONS host-util-linux-build
+make $BUILDROOT_OPTIONS host-libtool-build
+make $BUILDROOT_OPTIONS host-autoconf-build
+make $BUILDROOT_OPTIONS host-automake-build
+make $BUILDROOT_OPTIONS host-libzlib-build
+make $BUILDROOT_OPTIONS host-zlib-build
+make $BUILDROOT_OPTIONS host-attr-build
+make $BUILDROOT_OPTIONS host-acl-build
+make $BUILDROOT_OPTIONS host-fakeroot-build
+make $BUILDROOT_OPTIONS host-dosfstools-build

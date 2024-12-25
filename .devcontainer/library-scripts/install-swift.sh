@@ -1,14 +1,9 @@
 #!/bin/bash
 set -e
 
-SWIFT_PLATFORM=debian12
-SWIFT_BRANCH=swift-6.0.3-release
-SWIFT_VERSION=swift-6.0.3-RELEASE
-SWIFT_WEBROOT=https://download.swift.org
-HOST_SWIFT_SRCDIR=/workspaces/buildroot/output/build/host-swift-6.0.3
-HOST_SWIFT_BUILDDIR=$HOST_SWIFT_SRCDIR/build
-SWIFT_NATIVE_TOOLS=$HOST_SWIFT_BUILDDIR/usr/bin
-SWIFT_LLVM_DIR=$HOST_SWIFT_BUILDDIR/llvm
+# Configurable
+SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
+source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Download Swift toolchain
 export DEBIAN_FRONTEND=noninteractive

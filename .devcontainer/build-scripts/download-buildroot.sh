@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-BUILDROOT_RELEASE="${BUILDROOT_RELEASE:=2024.02.9}"
-BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
+# Configurable
+SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
+source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 cd /tmp/
 wget "https://buildroot.org/downloads/buildroot-$BUILDROOT_RELEASE.tar.gz"
