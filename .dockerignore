@@ -3,3 +3,5 @@ build
 buildroot
 llvm-project
 swift-source
+dl
+output
