@@ -88,6 +88,6 @@ rm -rf $HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/xctest-linux-x86_64
 
 # Generate tarball
 OUTPUT_DIR=$WORKING_DIR/output
-OUTPUT_TARBALL=$OUTPUT_DIR/host-tools.tar.gz
+OUTPUT_TARBALL=$WORKING_DIR/host-tools.tar.gz
 cd $WORKING_DIR
 tar -czvf $OUTPUT_TARBALL $OUTPUT_DIR
