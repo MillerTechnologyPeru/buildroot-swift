@@ -1,24 +1,6 @@
 name: Buildroot Host
 on: [workflow_dispatch]
 jobs:
-  build-swift-host-tools:
-    name: Build Swift Tools
-    runs-on: [linux, x64]
-    container: colemancda/buildroot-swift
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Build
-      run: |
-        export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-        $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-        $SWIFT_BUILDROOT/.devcontainer/build-scripts/generate-host-tar.sh
-    - name: Archive Build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-host-tools
-        path: ./host-tools.tar.gz
-  
   build-toolchain:
         name: Build Toolchain for Buildroot
         strategy:
@@ -26,7 +8,6 @@ jobs:
             config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
         runs-on: [linux, x64]
         container: colemancda/buildroot-swift
-        needs: build-swift-host-tools
         steps:
         - name: Checkout
           uses: actions/checkout@v3
