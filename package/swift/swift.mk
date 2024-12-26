@@ -196,21 +196,23 @@ SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
 
 define HOST_SWIFT_CONFIGURE_CMDS
 	# Clone swift sources
-	mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source
-	cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone https://github.com/swiftlang/swift.git
-	cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE
+	@if [ ! -d "$(HOST_SWIFT_SRCDIR)/swift-source" ]; then \
+		mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source; \
+		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone https://github.com/swiftlang/swift.git; \
+		cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE; \
+    fi
 endef
 
 define HOST_SWIFT_BUILD_CMDS
 	# Build
-	(cd $(HOST_SWIFT_SRCDIR)/swift-source \
-		&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
-		--preset=buildbot_linux,no_test \
-		install_destdir=$(HOST_SWIFT_BUILDDIR) \
-		installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz)
-	# Create symlink
-	rm -rf $(SWIFT_LLVM_DIR)
-	ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR)
+	@if [ ! -d "$(SWIFT_LLVM_DIR)" ]; then \
+		(cd $(HOST_SWIFT_SRCDIR)/swift-source \
+			&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
+			--preset=buildbot_linux,no_test \
+			install_destdir=$(HOST_SWIFT_BUILDDIR) \
+			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz); \
+		ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
+	fi
 endef
 
 define HOST_SWIFT_INSTALL_CMDS
