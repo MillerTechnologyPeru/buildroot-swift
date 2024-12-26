@@ -44,8 +44,8 @@ fi
 
 # Download LLVM headers
 if [ ! -d "$SWIFT_LLVM_DIR" ]; then
-    # Symlink to Debian LLVM
-    sudo apt install -y llvm-15
+    echo "Install LLVM"
+    # Symlink to system LLVM
     ln -s /usr/lib/llvm-15 $SWIFT_LLVM_DIR
 fi
 
