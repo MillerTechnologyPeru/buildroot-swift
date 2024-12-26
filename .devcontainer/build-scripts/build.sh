@@ -9,7 +9,6 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/configure.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/fetch-sources.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-tools.sh
-$SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-swift.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-toolchain.sh
 $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-base.sh
 
