@@ -37,8 +37,8 @@ else ifeq ($(SWIFT_TARGET_ARCH),armv5)
 SWIFT_EXTRA_FLAGS		= -march=armv5te
 SWIFTC_EXTRA_FLAGS		= -Xcc -march=armv5te
 else ifeq ($(SWIFT_TARGET_ARCH),riscv64)
-SWIFT_EXTRA_FLAGS		= -mno-relax -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI)) -mcpu=generic-rv64
-SWIFTC_EXTRA_FLAGS		= -Xcc -mno-relax -Xcc -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI)) -Xcc -mcpu=generic-rv64
+SWIFT_EXTRA_FLAGS		= -mno-relax -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
+SWIFTC_EXTRA_FLAGS		= -Xcc -mno-relax -Xcc -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
 else ifeq ($(SWIFT_TARGET_ARCH),mipsel)
 SWIFT_EXTRA_FLAGS		= -msoft-float
 SWIFTC_EXTRA_FLAGS		= -Xcc -msoft-float
@@ -263,7 +263,6 @@ define HOST_SWIFT_INSTALL_CMDS
     fi
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
-		echo '      "-Xcc", "-mcpu=generic-rv64",' >> $(SWIFT_DESTINATION_FILE);\
 		echo '      "-Xcc", "-mabi=$(BR2_GCC_TARGET_ABI)",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
