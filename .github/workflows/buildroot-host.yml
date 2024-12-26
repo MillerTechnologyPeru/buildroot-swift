@@ -1,12 +1,12 @@
-name: Buildroot Host
+name: Buildroot Self-Hosted
 on: [workflow_dispatch]
 jobs:
-  build-toolchain:
-        name: Build Toolchain for Buildroot
+  build:
+        name: Build
         strategy:
           matrix:
             config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
-        runs-on: [linux, x64]
+        runs-on: [self-hosted, linux, x64]
         container: colemancda/buildroot-swift
         steps:
         - name: Checkout
@@ -17,13 +17,8 @@ jobs:
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
             export SWIFT_TARGET_ARCH=${{ matrix.config }}
-            tar -xvf ./host-tools.tar.gz
             $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/configure.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/fetch-sources.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-tools.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-host-swift.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-toolchain.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
         - name: Archive Build artifacts
           uses: actions/upload-artifact@v3
           with:

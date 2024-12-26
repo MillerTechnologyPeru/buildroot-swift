@@ -1,31 +1,27 @@
-name: Publish Docker image
-
+name: Docker
 on: [workflow_dispatch]
-
 jobs:
-  push_to_registry:
-    name: Push Docker image to Docker Hub
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-        with:
-          context: .devcontainer
-          file: ./.devcontainer/Dockerfile
-          push: true
-          tags: latest
+    publish:
+        name: Build and Publish Docker image
+        strategy:
+          matrix:
+            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Authenticate Docker
+          uses: docker/login-action@v3.0.0
+          with:
+            username: ${{ secrets.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_PASSWORD }}
+        - name: Build
+          run: |
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+            export SWIFT_TARGET_ARCH=${{ matrix.arch }}
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-docker.sh
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build-${{ matrix.arch }}
+            path: ./output/${{ matrix.arch }}/images
