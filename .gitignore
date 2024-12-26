@@ -16,3 +16,4 @@ llvm-project
 swift-source
 dl
 output
+host-swift-*
