@@ -26,10 +26,25 @@ apt-get -q install -y \
     patch \
     perl \
     python3 \
+    python3-distutils \
     rsync \
     sed \
     tar \
     unzip \
     file \
     bison \
-    flex
+    flex \
+    binutils-gold \
+    libicu-dev \
+    libcurl4-openssl-dev \
+    libedit-dev \
+    libsqlite3-dev \
+    libncurses-dev \
+    libpython3-dev \
+    libxml2-dev \
+    pkg-config \
+    uuid-dev \
+    tzdata \
+    libstdc++-12-dev \
+    clang \
+    llvm-15 \

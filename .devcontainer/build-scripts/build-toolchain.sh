@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
 
-# Paths
-BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
+# Configurable
+SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
+source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build
-cd $BUILDROOT_DIR
-make toolchain
+cd $WORKING_DIR
+make $BUILDROOT_OPTIONS toolchain

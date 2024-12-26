@@ -1,7 +1,5 @@
 # Architecture
 BR2_riscv=y
-BR2_RISCV_ABI_LP64=y
-BR2_GCC_TARGET_FLOAT_ABI=soft
 
 # GNU C Toolchain
 BR2_KERNEL_HEADERS_6_6=y
@@ -14,7 +12,6 @@ BR2_TARGET_GENERIC_HOSTNAME="swift-linux"
 BR2_TARGET_GENERIC_ISSUE="Welcome to Swift Linux"
 
 # Swift Runtime Libraries
-BR2_PACKAGE_LIBDISPATCH=y
 BR2_PACKAGE_SWIFT=y
 
 # Dependencies

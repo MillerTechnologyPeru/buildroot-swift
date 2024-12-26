@@ -3,7 +3,7 @@ if BR2_PACKAGE_SWIFT
 config BR2_PACKAGE_SWIFT_HELLO
 	bool "swift-hello"
 	depends on BR2_PACKAGE_SWIFT
-	depends on BR2_PACKAGE_FOUNDATION
+	depends on BR2_PACKAGE_SWIFT_FOUNDATION
 	help
 	  Demo application for Swift.
 	  

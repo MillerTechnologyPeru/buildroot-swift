@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-# Paths
-BUILDROOT_DIR="${BUILDROOT_DIR:=/workspaces/buildroot}"
+# Configurable
+SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
+source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 
 # Build
-cd $BUILDROOT_DIR
-make source
-make libbsd-build
-make libxml2-build
-make openssl-build
-make libcurl-build
+cd $WORKING_DIR
+make $BUILDROOT_OPTIONS libbsd-build
+make $BUILDROOT_OPTIONS libxml2-build
+make $BUILDROOT_OPTIONS openssl-build
+make $BUILDROOT_OPTIONS libcurl-build

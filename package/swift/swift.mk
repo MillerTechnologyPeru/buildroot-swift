@@ -4,13 +4,17 @@ SWIFT_SITE = $(call github,swiftlang,swift,swift-$(SWIFT_VERSION)-RELEASE)
 SWIFT_LICENSE = Apache-2.0
 SWIFT_LICENSE_FILES = LICENSE.txt
 SWIFT_TARGET_ARCH = $(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))
-SWIFT_NATIVE_PATH = $(call qstrip,$(BR2_PACKAGE_SWIFT_NATIVE_TOOLS))
-SWIFT_LLVM_DIR = $(call qstrip,$(BR2_PACKAGE_SWIFT_LLVM_DIR))
 SWIFT_INSTALL_STAGING = YES
 SWIFT_INSTALL_TARGET = YES
 SWIFT_SUPPORTS_IN_SOURCE_BUILD = NO
 SWIFT_BUILDDIR = $(SWIFT_SRCDIR)/build
-SWIFT_DEPENDENCIES = host-swift icu libxml2 libbsd libdispatch
+SWIFT_DEPENDENCIES = host-swift host-cmake host-ninja icu libxml2 libbsd libedit zstd
+
+HOST_SWIFT_BUILDDIR = $(HOST_SWIFT_SRCDIR)/build
+SWIFT_NATIVE_PATH = $(HOST_SWIFT_BUILDDIR)/usr/bin
+SWIFT_LLVM_DIR = $(HOST_SWIFT_BUILDDIR)/llvm
+SWIFT_STRING_PROCESSING_SRCDIR = $(HOST_SWIFT_SRCDIR)/swift-source/swift-experimental-string-processing
+LIBDISPATCH_SRCDIR = $(HOST_SWIFT_SRCDIR)/swift-source/swift-corelibs-libdispatch
 
 ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
@@ -64,8 +68,6 @@ $(SWIFTC_EXTRA_FLAGS) \
 -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
 -sdk ${STAGING_DIR} \
 "
-
-SWIFT_STRING_PROCESSING_SRCDIR=$(SWIFT_BUILDDIR)/swift-experimental-string-processing-swift-$(SWIFT_VERSION)-RELEASE
 
 SWIFT_CONF_OPTS = \
 	-DCMAKE_C_COMPILER=$(SWIFT_NATIVE_PATH)/clang \
@@ -156,13 +158,6 @@ else
 endif
 
 define SWIFT_CONFIGURE_CMDS
-	# Fetch Swift string processing sources
-	(mkdir -p $(SWIFT_BUILDDIR) && \
-	cd $(SWIFT_BUILDDIR) && \
-	wget https://github.com/swiftlang/swift-experimental-string-processing/archive/refs/tags/swift-${SWIFT_VERSION}-RELEASE.tar.gz && \
-	tar -xvf swift-${SWIFT_VERSION}-RELEASE.tar.gz && \
-	rm -rf swift-${SWIFT_VERSION}-RELEASE.tar.gz \
-	)
 	# Configure for Ninja
 	(mkdir -p $(SWIFT_BUILDDIR) && \
 	cd $(SWIFT_BUILDDIR) && \
@@ -198,6 +193,27 @@ endef
 
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
 SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
+
+define HOST_SWIFT_CONFIGURE_CMDS
+	# Clone swift sources
+	@if [ ! -d "$(HOST_SWIFT_SRCDIR)/swift-source" ]; then \
+		mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source; \
+		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone https://github.com/swiftlang/swift.git; \
+		cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE; \
+    fi
+endef
+
+define HOST_SWIFT_BUILD_CMDS
+	# Build
+	@if [ ! -d "$(SWIFT_LLVM_DIR)" ]; then \
+		(cd $(HOST_SWIFT_SRCDIR)/swift-source \
+			&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
+			--preset=buildbot_linux,no_test \
+			install_destdir=$(HOST_SWIFT_BUILDDIR) \
+			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz); \
+		ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
+	fi
+endef
 
 define HOST_SWIFT_INSTALL_CMDS
 	# Create Swift support directory
@@ -257,12 +273,6 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-lstdc++"' >> $(SWIFT_DESTINATION_FILE)
 	echo '   ]' >> $(SWIFT_DESTINATION_FILE)
 	echo '}' >> $(SWIFT_DESTINATION_FILE)
-	
-	# Copy swift toolchain
-	mkdir -p $(HOST_SWIFT_SUPPORT_DIR)/bin/
-	cp -rf $(SWIFT_NATIVE_PATH)/* $(HOST_SWIFT_SUPPORT_DIR)/bin/
-	mkdir -p $(HOST_SWIFT_SUPPORT_DIR)/lib/
-	cp -rf $(SWIFT_NATIVE_PATH)/../lib/* $(HOST_SWIFT_SUPPORT_DIR)/lib/
 endef
 
 $(eval $(generic-package))

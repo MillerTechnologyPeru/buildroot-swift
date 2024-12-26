@@ -10,3 +10,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 .devcontainer/Dockerfile-*
+build
+buildroot
+llvm-project
+swift-source
+dl
+output
+host-swift-*
