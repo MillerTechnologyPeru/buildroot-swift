@@ -2,7 +2,7 @@ menu "Swift runtime"
 
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/libswiftdispatch/Config.in"
-    source "$BR2_EXTERNAL_SWIFT_PATH/package/foundation/Config.in"
+    source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-foundation/Config.in"
 
 endmenu
 
