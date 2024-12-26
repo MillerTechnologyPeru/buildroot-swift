@@ -46,7 +46,7 @@ fi
 if [ ! -d "$SWIFT_LLVM_DIR" ]; then
     echo "Install LLVM"
     # Symlink to system LLVM
-    ln -s /usr/lib/llvm-15 $SWIFT_LLVM_DIR
+    ln -s /usr/lib/llvm-16 $SWIFT_LLVM_DIR
 fi
 
 # Clone Swift StdLib dependencies
