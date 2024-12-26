@@ -208,12 +208,12 @@ define HOST_SWIFT_BUILD_CMDS
 		--preset=buildbot_linux,no_test \
 		install_destdir=$(HOST_SWIFT_BUILDDIR) \
 		installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz)
+	# Create symlink
+	rm -rf $(SWIFT_LLVM_DIR)
+	ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR)
 endef
 
 define HOST_SWIFT_INSTALL_CMDS
-	# Install LLVM
-	mkdir -p $(SWIFT_LLVM_DIR)
-	cp -rf $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-*/* $(SWIFT_LLVM_DIR)/
 	# Create Swift support directory
 	mkdir -p $(HOST_SWIFT_SUPPORT_DIR)
 	# Generate SwiftPM cross compilation toolchain file
