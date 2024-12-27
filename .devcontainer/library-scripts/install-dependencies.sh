@@ -47,4 +47,4 @@ apt-get -q install -y \
     tzdata \
     libstdc++-12-dev \
     clang \
-    llvm-15 \
+    llvm-16 \
