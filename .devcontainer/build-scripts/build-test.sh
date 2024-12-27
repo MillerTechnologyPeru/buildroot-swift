@@ -8,4 +8,4 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 # Build
 cd $WORKING_DIR
 make $BUILDROOT_OPTIONS swift-hello-build
-/usr/bin/$QEMU_BIN -L $BUILDROOT_TARGET $BUILDROOT_TARGET/usr/bin/swift-hello
+file $BUILDROOT_TARGET/usr/bin/swift-hello

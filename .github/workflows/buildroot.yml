@@ -22,11 +22,11 @@ jobs:
           with:
             name: build-${{ matrix.arch }}
             path: ${{ github.workspace }}/output/${{ matrix.arch }}/images/rootfs.tar
-        - name: Test
+        - name: Build Test
           run: |
               export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
               export SWIFT_TARGET_ARCH=${{ matrix.arch }}
-              $SWIFT_BUILDROOT/.devcontainer/build-scripts/test-swift.sh
+              $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-test.sh
         - name: Upload test binary
           uses: actions/upload-artifact@v4.5.0
           with:
