@@ -1,5 +1,5 @@
 # Architecture
-BR2_powerpc64=y
+BR2_powerpc64le=y
 BR2_powerpc_power7=y
 
 # GNU C Toolchain

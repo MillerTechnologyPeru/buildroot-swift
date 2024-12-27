@@ -13,10 +13,6 @@ let package = Package(
         .executableTarget(
             name: "swift-hello",
             dependencies: []
-        ),
-        .testTarget(
-            name: "swift-helloTests",
-            dependencies: ["swift-hello"]
-        ),
+        )
     ]
 )
