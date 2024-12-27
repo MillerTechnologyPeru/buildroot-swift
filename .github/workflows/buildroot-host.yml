@@ -8,6 +8,7 @@ jobs:
             config: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
         runs-on: [self-hosted, linux, x64]
         container: colemancda/buildroot-swift
+        timeout-minutes: 720
         steps:
         - name: Checkout
           uses: actions/checkout@v3
