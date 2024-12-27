@@ -22,3 +22,13 @@ jobs:
           with:
             name: build-${{ matrix.arch }}
             path: ./output/${{ matrix.arch }}/images
+        - name: Test
+          run: |
+              export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+              export SWIFT_TARGET_ARCH=${{ matrix.arch }}
+              $SWIFT_BUILDROOT/.devcontainer/build-scripts/test-swift.sh
+        - name: Upload test binary
+          uses: actions/upload-artifact@v3
+          with:
+            name: swift-hello-${{ matrix.arch }}
+            path: ./output/${{ matrix.arch }}/target/usr/bin/swift-hello
