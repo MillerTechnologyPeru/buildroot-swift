@@ -17,3 +17,5 @@ swift-source
 dl
 output
 host-swift-*
+.build
+.vscode
