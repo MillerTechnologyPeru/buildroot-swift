@@ -1,4 +1,3 @@
-import Foundation
 #if canImport(Foundation)
 import Foundation
 #endif
@@ -19,6 +18,7 @@ struct Hello {
         }
         for _ in 0 ..< 5 {
             print(UUID())
+            print(Date())
             try await Task.sleep(nanoseconds: 500_000_000)
         }
     }
@@ -28,4 +28,3 @@ func errorTest() async throws {
     print("Will throw")
     throw CocoaError(.userCancelled)
 }
-
