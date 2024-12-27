@@ -21,7 +21,7 @@ jobs:
           uses: actions/upload-artifact@v4.5.0
           with:
             name: build-${{ matrix.arch }}
-            path: ${{ github.workspace }}/output/${{ matrix.arch }}/images/rootfs.tar
+            path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/images/rootfs.tar
         - name: Build Test
           run: |
               export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
@@ -31,4 +31,4 @@ jobs:
           uses: actions/upload-artifact@v4.5.0
           with:
             name: swift-hello-${{ matrix.arch }}
-            path: ${{ github.workspace }}/output/${{ matrix.arch }}/target/usr/bin/swift-hello
+            path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/target/usr/bin/swift-hello
