@@ -74,6 +74,7 @@ define SWIFT_FOUNDATION_INSTALL_STAGING_CMDS
 	echo 'framework module CoreFoundation [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CoreFoundation/CoreFoundation.h" }' > ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	# Copy Swift modules
 	cp $(SWIFT_FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/
+	cp -rf $(SWIFT_FOUNDATION_BUILDDIR)/_CModulesForClients/*  ${STAGING_DIR}/usr/lib/swift/
 	# Restore Dispatch headers
 	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)
 endef

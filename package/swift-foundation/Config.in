@@ -1,7 +1,7 @@
 if BR2_PACKAGE_SWIFT
 
 config BR2_PACKAGE_SWIFT_FOUNDATION
-	bool "foundation"
+	bool "swift-foundation"
 	depends on BR2_PACKAGE_SWIFT
 	select BR2_PACKAGE_LIBSWIFTDISPATCH
 	select BR2_PACKAGE_LIBCURL
