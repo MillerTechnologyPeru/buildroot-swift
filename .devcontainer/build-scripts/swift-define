@@ -12,6 +12,7 @@ BUILDROOT_DEFCONFIG=swift_${SWIFT_TARGET_ARCH}_defconfig
 BUILDROOT_DIR=$WORKING_DIR/buildroot
 BR2_EXTERNAL=$SWIFT_BUILDROOT
 BUILDROOT_OUTPUT=$WORKING_DIR/output/$SWIFT_TARGET_ARCH
+BUILDROOT_TARGET=$BUILDROOT_OUTPUT/target
 BUILDROOT_OPTIONS="O=$BUILDROOT_OUTPUT -C $BUILDROOT_DIR BR2_EXTERNAL=$BR2_EXTERNAL"
 HOST_SWIFT_SRCDIR=$BUILDROOT_OUTPUT/build/host-swift-6.0.3
 SWIFT_LLVM_BUILD_DIR=$HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/llvm-linux-$(uname -m)
@@ -19,3 +20,14 @@ HOST_SWIFT_BUILDDIR=$HOST_SWIFT_SRCDIR/build
 SWIFT_NATIVE_TOOLS=$HOST_SWIFT_BUILDDIR/usr/bin
 SWIFT_LLVM_DIR=$HOST_SWIFT_BUILDDIR/llvm
 DOCKER_FILE=$SWIFT_BUILDROOT/.devcontainer/Dockerfile
+if [[ "$SWIFT_TARGET_ARCH" == "arm64" ]]; then
+   QEMU_BIN=qemu-aarch64-static
+elif [[ "$SWIFT_TARGET_ARCH" == "armv5" ]]; then
+   QEMU_BIN=qemu-arm-static
+elif [[ "$SWIFT_TARGET_ARCH" == "armv6" ]]; then
+   QEMU_BIN=qemu-arm-static
+elif [[ "$SWIFT_TARGET_ARCH" == "armv7" ]]; then
+   QEMU_BIN=qemu-arm-static
+else
+   QEMU_BIN=qemu-$SWIFT_TARGET_ARCH-static
+fi
