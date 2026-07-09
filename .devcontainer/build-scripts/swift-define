@@ -7,6 +7,10 @@ SWIFT_BRANCH="${SWIFT_BRANCH:=swift-6.3.2-release}"
 SWIFT_VERSION="${SWIFT_VERSION:=swift-6.3.2-RELEASE}"
 SWIFT_PLATFORM="${SWIFT_PLATFORM:=debian12}"
 
+# Allow buildroot host packages (tar) to configure when running as root,
+# e.g. inside docker build and CI containers
+export FORCE_UNSAFE_CONFIGURE=1
+
 # Defines
 BUILDROOT_DEFCONFIG=swift_${SWIFT_TARGET_ARCH}_defconfig
 BUILDROOT_DIR=$WORKING_DIR/buildroot
