@@ -33,6 +33,9 @@ endif
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
+else ifeq ($(SWIFT_TARGET_ARCH),armv6)
+SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
+SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
 SWIFT_EXTRA_FLAGS		= -march=armv5te
 SWIFTC_EXTRA_FLAGS		= -Xcc -march=armv5te
@@ -269,6 +272,10 @@ define HOST_SWIFT_INSTALL_CMDS
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "armv5" ]; then\
 		echo '      "-Xcc", "-march=armv5te",' >> $(SWIFT_DESTINATION_FILE);\
+    fi
+
+	@if [ "$(SWIFT_TARGET_ARCH)" = "armv6" ]; then\
+		echo '      "-Xcc", "-mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
