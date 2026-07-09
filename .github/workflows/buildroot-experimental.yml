@@ -8,7 +8,7 @@ jobs:
           matrix:
             config: ["riscv64"]
         runs-on: Linux
-        container: swift:6.0.3-bookworm
+        container: swift:6.3.2-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -18,7 +18,7 @@ jobs:
             export DEFCONFIG=swift_${{ matrix.config }}_defconfig
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.3.2-RELEASE/swift-6.3.2-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
@@ -36,7 +36,7 @@ jobs:
           matrix:
             config: ["ppc"]
         runs-on: ubuntu-latest
-        container: swift:6.0.3-bookworm
+        container: swift:6.3.2-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -50,7 +50,7 @@ jobs:
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.3.2-RELEASE/swift-6.3.2-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
@@ -68,7 +68,7 @@ jobs:
           matrix:
             config: ["mips", "mips64"]
         runs-on: ubuntu-latest
-        container: swift:6.0.3-bookworm
+        container: swift:6.3.2-bookworm
         steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -82,7 +82,7 @@ jobs:
             export BUILDROOT_RELEASE=2024.02.9
             export DEBIAN_FRONTEND=noninteractive 
             export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.0.3-RELEASE/swift-6.0.3-x86_64-RELEASE-Debian12.tar.gz
+            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.3.2-RELEASE/swift-6.3.2-x86_64-RELEASE-Debian12.tar.gz
             apt update
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
             $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh

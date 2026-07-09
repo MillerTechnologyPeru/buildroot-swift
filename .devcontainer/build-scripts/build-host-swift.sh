@@ -18,10 +18,10 @@ do
         mkdir -p $BUILDROOT_OUTPUT_ARCH
         mkdir -p $BUILDROOT_OUTPUT_ARCH/build/
         cd $BUILDROOT_OUTPUT_ARCH/build
-        if [ ! -d "$BUILDROOT_OUTPUT_ARCH/build/host-swift-6.0.3" ]; then
+        if [ ! -d "$BUILDROOT_OUTPUT_ARCH/build/host-swift-6.3.2" ]; then
             echo "Generating host tools symlink for $i"
-            ln -s ../../$SWIFT_TARGET_ARCH/build/host-swift-6.0.3 ./host-swift-6.0.3
-            rm $BUILDROOT_OUTPUT_ARCH/build/host-swift-6.0.3/.stamp_host_installed
+            ln -s ../../$SWIFT_TARGET_ARCH/build/host-swift-6.3.2 ./host-swift-6.3.2
+            rm $BUILDROOT_OUTPUT_ARCH/build/host-swift-6.3.2/.stamp_host_installed
         fi
     fi
 done
