@@ -64,4 +64,16 @@ if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-experimental-string-processing"
     git checkout $SWIFT_VERSION
     cd ../
 fi
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation" ]; then
+    git clone https://github.com/swiftlang/swift-foundation.git
+    cd swift-foundation
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation-icu" ]; then
+    git clone https://github.com/apple/swift-foundation-icu.git
+    cd swift-foundation-icu
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
 
