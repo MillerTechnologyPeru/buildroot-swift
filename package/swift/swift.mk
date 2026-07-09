@@ -1,5 +1,5 @@
 ### Apple's Swift Programming Language
-SWIFT_VERSION = 6.0.3
+SWIFT_VERSION = 6.3.2
 SWIFT_SITE = $(call github,swiftlang,swift,swift-$(SWIFT_VERSION)-RELEASE)
 SWIFT_LICENSE = Apache-2.0
 SWIFT_LICENSE_FILES = LICENSE.txt
@@ -31,6 +31,9 @@ SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
+SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
+SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
+else ifeq ($(SWIFT_TARGET_ARCH),armv6)
 SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
@@ -114,6 +117,12 @@ SWIFT_CONF_OPTS = \
 	-DSWIFT_INCLUDE_TEST_BINARIES=OFF \
     -DSWIFT_BUILD_TEST_SUPPORT_MODULES=OFF \
 	-DZLIB_LIBRARY=$(STAGING_DIR)/usr/lib/libz.so \
+
+# The overridable retain/release fast path uses indirect musttail calls,
+# which clang cannot generate on these targets
+ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mipsel mips64el),)
+SWIFT_CONF_OPTS += -DSWIFT_STDLIB_OVERRIDABLE_RETAIN_RELEASE=FALSE
+endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_CONF_OPTS	+= \
@@ -263,6 +272,10 @@ define HOST_SWIFT_INSTALL_CMDS
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "armv5" ]; then\
 		echo '      "-Xcc", "-march=armv5te",' >> $(SWIFT_DESTINATION_FILE);\
+    fi
+
+	@if [ "$(SWIFT_TARGET_ARCH)" = "armv6" ]; then\
+		echo '      "-Xcc", "-mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\

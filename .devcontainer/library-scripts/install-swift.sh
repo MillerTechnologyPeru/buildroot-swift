@@ -46,7 +46,7 @@ fi
 if [ ! -d "$SWIFT_LLVM_DIR" ]; then
     echo "Install LLVM"
     # Symlink to system LLVM
-    ln -s /usr/lib/llvm-16 $SWIFT_LLVM_DIR
+    ln -s /usr/lib/llvm-21 $SWIFT_LLVM_DIR
 fi
 
 # Clone Swift StdLib dependencies
@@ -61,6 +61,18 @@ fi
 if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-experimental-string-processing" ]; then
     git clone https://github.com/swiftlang/swift-experimental-string-processing.git
     cd swift-experimental-string-processing
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation" ]; then
+    git clone https://github.com/swiftlang/swift-foundation.git
+    cd swift-foundation
+    git checkout $SWIFT_VERSION
+    cd ../
+fi
+if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation-icu" ]; then
+    git clone https://github.com/apple/swift-foundation-icu.git
+    cd swift-foundation-icu
     git checkout $SWIFT_VERSION
     cd ../
 fi

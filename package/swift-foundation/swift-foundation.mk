@@ -1,5 +1,5 @@
 ### Foundation
-SWIFT_FOUNDATION_VERSION = 6.0.3
+SWIFT_FOUNDATION_VERSION = 6.3.2
 SWIFT_FOUNDATION_SITE = $(call github,swiftlang,swift-corelibs-foundation,swift-$(SWIFT_FOUNDATION_VERSION)-RELEASE)
 SWIFT_FOUNDATION_LICENSE = Apache-2.0
 SWIFT_FOUNDATION_LICENSE_FILES = LICENSE
@@ -22,6 +22,8 @@ SWIFT_FOUNDATION_CONF_OPTS += \
 	-DLibRT_LIBRARIES=${STAGING_DIR}/usr/lib/librt.a \
 	-DSwiftFoundation_MODULE_TRIPLE=${SWIFT_TARGET_NAME} \
 	-DSwiftFoundation_MACRO=${SWIFT_NATIVE_PATH}/../lib/swift/host/plugins \
+	-D_SwiftFoundation_SourceDIR=$(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation \
+	-D_SwiftFoundationICU_SourceDIR=$(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation-icu \
 
 ifeq (SWIFT_FOUNDATION_SUPPORTS_IN_SOURCE_BUILD),YES)
 SWIFT_FOUNDATION_BUILDDIR			= $(SWIFT_FOUNDATION_SRCDIR)

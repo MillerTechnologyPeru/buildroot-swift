@@ -4,13 +4,14 @@ jobs:
     build:
         name: Build Swift for Buildroot
         strategy:
+          fail-fast: false
           matrix:
             arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
         runs-on: ubuntu-latest
         container: colemancda/buildroot-swift:swift_${{ matrix.arch }}_defconfig
         steps:
         - name: Checkout
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
         - name: Build
           run: |
             export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
