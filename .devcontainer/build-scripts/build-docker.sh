@@ -14,7 +14,7 @@ docker push colemancda/buildroot-swift
 cd $SWIFT_BUILDROOT
 DOCKER_FILE_ARCH=$SWIFT_BUILDROOT/.devcontainer/Dockerfile-$BUILDROOT_DEFCONFIG
 rm -rf $DOCKER_FILE_ARCH
-echo "FROM colemancda/buildroot-swift" >> $DOCKER_FILE_ARCH
+echo "FROM colemancda/buildroot-swift AS build" >> $DOCKER_FILE_ARCH
 echo "ENV SWIFT_TARGET_ARCH=${SWIFT_TARGET_ARCH}" >> $DOCKER_FILE_ARCH
 echo "ENV SWIFT_BUILDROOT=/workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
 echo "ENV WORKING_DIR=/workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
@@ -33,6 +33,15 @@ echo "COPY .devcontainer/build-scripts/build-toolchain.sh /tmp/build-scripts/" >
 echo "RUN /bin/bash /tmp/build-scripts/build-toolchain.sh" >> $DOCKER_FILE_ARCH
 echo "COPY .devcontainer/build-scripts/build-base.sh /tmp/build-scripts/" >> $DOCKER_FILE_ARCH
 echo "RUN /bin/bash /tmp/build-scripts/build-base.sh" >> $DOCKER_FILE_ARCH
+echo "COPY .devcontainer/build-scripts/clean-image.sh /tmp/build-scripts/" >> $DOCKER_FILE_ARCH
+echo "RUN /bin/bash /tmp/build-scripts/clean-image.sh" >> $DOCKER_FILE_ARCH
+# Flatten the built tree into a single layer on top of the base image;
+# cleanup in a RUN step alone would not shrink the pulled image
+echo "FROM colemancda/buildroot-swift" >> $DOCKER_FILE_ARCH
+echo "ENV SWIFT_TARGET_ARCH=${SWIFT_TARGET_ARCH}" >> $DOCKER_FILE_ARCH
+echo "ENV SWIFT_BUILDROOT=/workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
+echo "ENV WORKING_DIR=/workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
+echo "COPY --from=build /workspaces/buildroot-swift /workspaces/buildroot-swift" >> $DOCKER_FILE_ARCH
 
 # Build Docker image
 docker build -t colemancda/buildroot-swift:$BUILDROOT_DEFCONFIG --file $DOCKER_FILE_ARCH .

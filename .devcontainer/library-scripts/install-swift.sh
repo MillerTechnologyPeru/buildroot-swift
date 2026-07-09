@@ -53,27 +53,15 @@ fi
 mkdir -p $HOST_SWIFT_SRCDIR/swift-source
 cd $HOST_SWIFT_SRCDIR/swift-source
 if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-corelibs-libdispatch" ]; then
-    git clone https://github.com/swiftlang/swift-corelibs-libdispatch.git
-    cd swift-corelibs-libdispatch
-    git checkout $SWIFT_VERSION
-    cd ../
+    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-corelibs-libdispatch.git
 fi
 if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-experimental-string-processing" ]; then
-    git clone https://github.com/swiftlang/swift-experimental-string-processing.git
-    cd swift-experimental-string-processing
-    git checkout $SWIFT_VERSION
-    cd ../
+    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-experimental-string-processing.git
 fi
 if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation" ]; then
-    git clone https://github.com/swiftlang/swift-foundation.git
-    cd swift-foundation
-    git checkout $SWIFT_VERSION
-    cd ../
+    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-foundation.git
 fi
 if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation-icu" ]; then
-    git clone https://github.com/apple/swift-foundation-icu.git
-    cd swift-foundation-icu
-    git checkout $SWIFT_VERSION
-    cd ../
+    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/apple/swift-foundation-icu.git
 fi
 
