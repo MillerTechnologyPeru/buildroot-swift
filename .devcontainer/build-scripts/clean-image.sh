@@ -11,19 +11,9 @@ source $SWIFT_BUILDROOT/.devcontainer/build-scripts/swift-define
 # Remove downloaded source tarballs; the CI build re-downloads the few it needs
 rm -rf $BUILDROOT_DIR/dl $WORKING_DIR/dl
 
-# Strip package build trees down to their buildroot stamp and metadata files.
-# The toolchain and base dependencies are already installed into host/,
-# staging/ and target/; buildroot only checks the stamps on rebuild.
-# The pre-seeded host Swift toolchain must be kept.
-cd $BUILDROOT_OUTPUT/build
-for dir in */; do
-    case "$dir" in
-        host-swift-*) continue ;;
-    esac
-    find "$dir" -mindepth 1 \
-        ! -name '.stamp*' \
-        ! -name '.applied_patches_list' \
-        ! -name '.files-list*' \
-        ! -name '.br2_version' \
-        -delete 2>/dev/null || true
-done
+# NOTE: package build directories under $BUILDROOT_OUTPUT/build are NOT
+# stripped here. Buildroot uses a package's build directory, not just its
+# stamp files, to decide whether later steps (e.g. a host package's
+# install step, run separately from its build step) still need to run.
+# Deleting sources while keeping stamps caused false "already done"
+# detection and broke host-fakeroot's install step in CI.
