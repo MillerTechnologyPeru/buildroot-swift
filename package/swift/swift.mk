@@ -115,6 +115,12 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_BUILD_TEST_SUPPORT_MODULES=OFF \
 	-DZLIB_LIBRARY=$(STAGING_DIR)/usr/lib/libz.so \
 
+# The overridable retain/release fast path uses indirect musttail calls,
+# which clang cannot generate on these targets
+ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mipsel mips64el),)
+SWIFT_CONF_OPTS += -DSWIFT_STDLIB_OVERRIDABLE_RETAIN_RELEASE=FALSE
+endif
+
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_CONF_OPTS	+= \
 	-DCMAKE_Swift_FLAGS_DEBUG="" \
