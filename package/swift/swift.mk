@@ -353,6 +353,15 @@ define HOST_SWIFT_INSTALL_CMDS
 		echo '      "-Xcc", "-mabi=$(BR2_GCC_TARGET_ABI)",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
+	# powerpc64le has no hardware Float16, so the compiler lowers Float16
+	# conversions to libgcc soft-float helpers (__truncsfhf2, __extendhfsf2,
+	# __truncdfhf2). These live in the shared libgcc_s, not the static libgcc
+	# the driver links by default, so force-link libgcc_s for swift-hello.
+	# (Other targets lower Float16 in hardware and never emit these calls.)
+	@if [ "$(SWIFT_TARGET_ARCH)" = "powerpc64le" ]; then\
+		echo '      "-Xclang-linker", "-Wl,--no-as-needed,-lgcc_s,--as-needed",' >> $(SWIFT_DESTINATION_FILE);\
+    fi
+
 	echo '      "-sdk", "$(STAGING_DIR)"' >> $(SWIFT_DESTINATION_FILE)
 	echo '   ],' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-cpp-flags":[' >> $(SWIFT_DESTINATION_FILE)
