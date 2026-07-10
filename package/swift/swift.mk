@@ -354,12 +354,15 @@ define HOST_SWIFT_INSTALL_CMDS
     fi
 
 	# powerpc64le has no hardware Float16, so the compiler lowers Float16
-	# conversions to libgcc soft-float helpers (__truncsfhf2, __extendhfsf2,
-	# __truncdfhf2). These live in the shared libgcc_s, not the static libgcc
-	# the driver links by default, so force-link libgcc_s for swift-hello.
-	# (Other targets lower Float16 in hardware and never emit these calls.)
+	# conversions to the soft-float helpers __truncsfhf2 / __extendhfsf2 /
+	# __truncdfhf2. Swift's Float16Support.cpp only defines these for
+	# x86/arm, not PowerPC, so they must come from libgcc. libgcc.a provides
+	# them, but the only references are undefined symbols in libswiftCore.so,
+	# which do not force extraction of the archive member. Force-pull the
+	# helpers with -u so they are linked into swift-hello. (Other targets
+	# lower Float16 in hardware and never emit these calls.)
 	@if [ "$(SWIFT_TARGET_ARCH)" = "powerpc64le" ]; then\
-		echo '      "-Xclang-linker", "-Wl,--no-as-needed,-lgcc_s,--as-needed",' >> $(SWIFT_DESTINATION_FILE);\
+		echo '      "-Xclang-linker", "-Wl,-u,__truncsfhf2,-u,__extendhfsf2,-u,__truncdfhf2",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
 	echo '      "-sdk", "$(STAGING_DIR)"' >> $(SWIFT_DESTINATION_FILE)
