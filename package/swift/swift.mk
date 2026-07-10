@@ -20,14 +20,23 @@ ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
 endif
 
+# SWIFT_GCC_ALIAS_TRIPLE is the standard multiarch triple Clang recognises when
+# scanning the sysroot for a GCC install (see SWIFT_INSTALL_STAGING_CMDS). It
+# differs from $(GNU_TARGET_NAME), whose "swift" vendor Clang does not accept,
+# and from $(SWIFT_TARGET_NAME), which for ARM keeps the armvN sub-arch while
+# Clang normalises it to plain "arm".
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_TARGET_NAME		= armv7-unknown-linux-gnueabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv6)
 SWIFT_TARGET_NAME		= armv6-unknown-linux-gnueabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
 SWIFT_TARGET_NAME		= armv5-unknown-linux-gnueabi
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabi
 else
 SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
+SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-gnu
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -59,9 +68,11 @@ SWIFT_EXTRA_FLAGS		=
 SWIFTC_EXTRA_FLAGS		= 
 endif
 
+SWIFT_GCC_VERSION = $(call qstrip,$(BR2_GCC_VERSION))
+
 # Buildroot's target libstdc++ headers live in the host GCC toolchain,
 # not in the staging sysroot
-SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))
+SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(SWIFT_GCC_VERSION)
 
 # The Buildroot cross GCC install directory (holds libgcc and the crt objects).
 # Swift/Clang locate the libstdc++ headers and C++ stdlib module map through
@@ -70,7 +81,7 @@ SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qs
 # this directory; unlike --gcc-toolchain it skips triple-alias matching, which
 # would otherwise fail because the toolchain directory name ($(GNU_TARGET_NAME))
 # carries the "swift" vendor while the target triple carries "unknown".
-SWIFT_GCC_INSTALL_DIR = $(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))
+SWIFT_GCC_INSTALL_DIR = $(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(SWIFT_GCC_VERSION)
 
 # Swift compile flags (CMake list) for the CxxStdlib overlay. The overlay's
 # default is "-Xcc --gcc-toolchain=/usr", which resolves to the build machine's
@@ -222,6 +233,29 @@ endef
 define SWIFT_INSTALL_STAGING_CMDS
 	# Copy runtime libraries and Swift interfaces
 	(cd $(SWIFT_BUILDDIR) && ninja install)
+	# Make the host libstdc++ discoverable from the SDK sysroot. Consumers of the
+	# CxxStdlib module rebuild it from its textual .swiftinterface, and that
+	# rebuild does NOT inherit the toolchain file's -Xcc --gcc-install-dir / -I
+	# flags -- it only sees the SDK sysroot. Clang finds libstdc++ there by
+	# scanning <sysroot>/usr/lib/gcc/<triple> for a GCC install and deriving the
+	# C++ header paths relative to it. Requirements learned the hard way:
+	#   * the <triple> dir must use a standard alias ($(SWIFT_GCC_ALIAS_TRIPLE));
+	#     Clang rejects the "swift" vendor in $(GNU_TARGET_NAME).
+	#   * that dir must be a *real* directory (only its contents symlinked); if it
+	#     is itself a symlink Clang resolves it and mis-derives the ../include/c++
+	#     paths, landing outside the sysroot.
+	mkdir -p $(STAGING_DIR)/usr/lib/gcc/$(SWIFT_GCC_ALIAS_TRIPLE)/$(SWIFT_GCC_VERSION)
+	for f in $(SWIFT_GCC_INSTALL_DIR)/*; do \
+		ln -sf $$f $(STAGING_DIR)/usr/lib/gcc/$(SWIFT_GCC_ALIAS_TRIPLE)/$(SWIFT_GCC_VERSION)/; \
+	done
+	# Base C++ headers (<vector>, <chrono>, ...) at <sysroot>/usr/include/c++/<ver>
+	mkdir -p $(STAGING_DIR)/usr/include/c++
+	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR) \
+		$(STAGING_DIR)/usr/include/c++/$(SWIFT_GCC_VERSION)
+	# Arch-specific bits (bits/c++config.h) at the multiarch location Clang probes
+	mkdir -p $(STAGING_DIR)/usr/include/$(SWIFT_GCC_ALIAS_TRIPLE)/c++
+	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME) \
+		$(STAGING_DIR)/usr/include/$(SWIFT_GCC_ALIAS_TRIPLE)/c++/$(SWIFT_GCC_VERSION)
 endef
 
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
