@@ -20,14 +20,33 @@ ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
 endif
 
+# SWIFT_GCC_ALIAS_TRIPLE is the standard multiarch triple Clang recognises when
+# scanning the sysroot for a GCC install (see SWIFT_INSTALL_STAGING_CMDS). It
+# differs from $(GNU_TARGET_NAME), whose "swift" vendor Clang does not accept,
+# and from $(SWIFT_TARGET_NAME), which for ARM keeps the armvN sub-arch while
+# Clang normalises it to plain "arm".
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_TARGET_NAME		= armv7-unknown-linux-gnueabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv6)
 SWIFT_TARGET_NAME		= armv6-unknown-linux-gnueabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
 SWIFT_TARGET_NAME		= armv5-unknown-linux-gnueabi
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabi
 else
 SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
+SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-gnu
+endif
+
+# The Debian multiarch tuple, which Clang uses to locate the arch-specific C++
+# headers (bits/c++config.h), as opposed to SWIFT_GCC_ALIAS_TRIPLE which names
+# the GCC install itself. They match for every target except i686, whose install
+# is i686-linux-gnu but whose multiarch tuple is i386-linux-gnu
+# ("clang -print-multiarch").
+SWIFT_GCC_MULTIARCH_TRIPLE = $(SWIFT_GCC_ALIAS_TRIPLE)
+ifeq ($(SWIFT_TARGET_ARCH),i686)
+SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-gnu
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -59,13 +78,40 @@ SWIFT_EXTRA_FLAGS		=
 SWIFTC_EXTRA_FLAGS		= 
 endif
 
+SWIFT_GCC_VERSION = $(call qstrip,$(BR2_GCC_VERSION))
+
+# Buildroot's target libstdc++ headers live in the host GCC toolchain,
+# not in the staging sysroot
+SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(SWIFT_GCC_VERSION)
+
+# The Buildroot cross GCC install directory (holds libgcc and the crt objects).
+# Swift/Clang locate the libstdc++ headers and C++ stdlib module map through
+# Clang's C++ stdlib toolchain search, which needs a *detected* GCC installation
+# -- plain -I flags are not consulted. --gcc-install-dir points Clang straight at
+# this directory; unlike --gcc-toolchain it skips triple-alias matching, which
+# would otherwise fail because the toolchain directory name ($(GNU_TARGET_NAME))
+# carries the "swift" vendor while the target triple carries "unknown".
+SWIFT_GCC_INSTALL_DIR = $(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(SWIFT_GCC_VERSION)
+
+# Swift compile flags (CMake list) for the CxxStdlib overlay. The overlay's
+# default is "-Xcc --gcc-toolchain=/usr", which resolves to the build machine's
+# GCC instead of the Buildroot cross toolchain.
+#
+# -no-verify-emitted-module-interface: the overlay is built with library
+# evolution, so the driver re-typechecks the emitted .swiftinterface. That
+# verification re-invocation only sees the flags baked into the interface's
+# swift-module-flags line, which strips the -Xcc paths above, so it cannot find
+# the host-only libstdc++ headers (<chrono>) and fails. Real consumers get the
+# paths from the SwiftPM toolchain file, so skip this internal self-check.
+SWIFT_CXX_OVERLAY_FLAGS = -Xcc;--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME);-no-verify-emitted-module-interface
+
 SWIFTC_FLAGS="-target $(SWIFT_TARGET_NAME) -use-ld=lld \
 -resource-dir ${STAGING_DIR}/usr/lib/swift \
 -Xclang-linker -B${STAGING_DIR}/usr/lib \
 -Xclang-linker -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
 -Xcc -I${STAGING_DIR}/usr/include \
--Xcc -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION)) \
--Xcc -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/$(GNU_TARGET_NAME) \
+-Xcc -I$(SWIFT_GCC_CXX_INCLUDE_DIR) \
+-Xcc -I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME) \
 $(SWIFTC_EXTRA_FLAGS) \
 -L${STAGING_DIR}/lib \
 -L${STAGING_DIR}/usr/lib \
@@ -105,9 +151,11 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
 	-DSWIFT_PATH_TO_STRING_PROCESSING_SOURCE=${SWIFT_STRING_PROCESSING_SRCDIR} \
-	-DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF \
-	-DSWIFT_ENABLE_CXX_INTEROP_SWIFT_BRIDGING_HEADER=OFF \
-	-DSWIFT_BUILD_STDLIB_CXX_MODULE=OFF \
+	-DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=ON \
+	-DSWIFT_ENABLE_CXX_INTEROP_SWIFT_BRIDGING_HEADER=ON \
+	-DSWIFT_BUILD_STDLIB_CXX_MODULE=ON \
+	-DSWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS="$(SWIFT_CXX_OVERLAY_FLAGS)" \
+	-DSWIFT_ENABLE_VOLATILE=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_NONESCAPABLE_TYPES=ON \
@@ -193,14 +241,31 @@ define SWIFT_INSTALL_TARGET_CMDS
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
-	# Workaround disabled C++ module
-	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
-	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
 	# Copy runtime libraries and Swift interfaces
 	(cd $(SWIFT_BUILDDIR) && ninja install)
-	# Remove disabled C++ module
-	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
-	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
+	# Make the host libstdc++ discoverable from the SDK sysroot. Consumers of the
+	# CxxStdlib module rebuild it from its textual .swiftinterface, and that
+	# rebuild does NOT inherit the toolchain file's -Xcc --gcc-install-dir / -I
+	# flags -- it only sees the SDK sysroot. Clang finds libstdc++ there by
+	# scanning <sysroot>/usr/lib/gcc/<triple> for a GCC install and deriving the
+	# C++ header paths relative to it. Requirements learned the hard way:
+	#   * the <triple> dir must use a standard alias ($(SWIFT_GCC_ALIAS_TRIPLE));
+	#     Clang rejects the "swift" vendor in $(GNU_TARGET_NAME).
+	#   * that dir must be a *real* directory (only its contents symlinked); if it
+	#     is itself a symlink Clang resolves it and mis-derives the ../include/c++
+	#     paths, landing outside the sysroot.
+	mkdir -p $(STAGING_DIR)/usr/lib/gcc/$(SWIFT_GCC_ALIAS_TRIPLE)/$(SWIFT_GCC_VERSION)
+	for f in $(SWIFT_GCC_INSTALL_DIR)/*; do \
+		ln -sf $$f $(STAGING_DIR)/usr/lib/gcc/$(SWIFT_GCC_ALIAS_TRIPLE)/$(SWIFT_GCC_VERSION)/; \
+	done
+	# Base C++ headers (<vector>, <chrono>, ...) at <sysroot>/usr/include/c++/<ver>
+	mkdir -p $(STAGING_DIR)/usr/include/c++
+	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR) \
+		$(STAGING_DIR)/usr/include/c++/$(SWIFT_GCC_VERSION)
+	# Arch-specific bits (bits/c++config.h) at the multiarch location Clang probes
+	mkdir -p $(STAGING_DIR)/usr/include/$(SWIFT_GCC_MULTIARCH_TRIPLE)/c++
+	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME) \
+		$(STAGING_DIR)/usr/include/$(SWIFT_GCC_MULTIARCH_TRIPLE)/c++/$(SWIFT_GCC_VERSION)
 endef
 
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
@@ -240,6 +305,9 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '   "target":"$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "dynamic-library-extension":"so",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-cc-flags":[' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-fPIC",' >> $(SWIFT_DESTINATION_FILE)
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "armv5" ]; then\
@@ -261,6 +329,9 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-Xlinker", "--build-id=sha1",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/include",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-resource-dir", "$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xclang-linker", "-B$(STAGING_DIR)/usr/lib",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xclang-linker", "-B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))",' >> $(SWIFT_DESTINATION_FILE)

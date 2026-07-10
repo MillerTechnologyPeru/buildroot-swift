@@ -1,0 +1,92 @@
+From 2b3c4d5e6f70000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Fri, 10 Jul 2026 06:15:00 -0400
+Subject: [PATCH] Provide Float16 conversion helpers on powerpc64le
+
+Float16Support.cpp implements the soft-float helpers __truncsfhf2 /
+__extendhfsf2 / __truncdfhf2, but its guard excludes PowerPC and the
+implementation uses the C _Float16 type, which Clang does not support on
+powerpc64le. As a result libswiftCore.so references these helpers as
+undefined symbols and every executable linking it (e.g. swift-hello built
+with C++ interop) fails to link.
+
+Enable the shims for __powerpc64__ and route the _Float16 type through a
+__swift_fp16 typedef that is unsigned short on powerpc64le. The half
+values only move through memory as 16-bit patterns and the soft-float ABI
+passes/returns them as i16 in a GPR, so unsigned short is ABI-compatible
+-- this is exactly what compiler-rt does on targets without a native
+Float16 type. Behaviour is unchanged on all other targets, where
+__swift_fp16 is still _Float16.
+--- a/stdlib/public/runtime/Float16Support.cpp
++++ b/stdlib/public/runtime/Float16Support.cpp
+@@ -31,10 +31,20 @@
+ // Android NDK <r21 do not provide `__aeabi_d2h` in the compiler runtime,
+ // provide shims in that case.
+ #if (defined(__ANDROID__) && defined(__ARM_ARCH_7A__) && defined(__ARM_EABI__)) || \
+-  ((defined(__i386__) || defined(__i686__) || defined(__arm__) || defined(__x86_64__)) && !defined(__APPLE__))
++  ((defined(__i386__) || defined(__i686__) || defined(__arm__) || defined(__x86_64__) || defined(__powerpc64__)) && !defined(__APPLE__))
+ 
+ #include "swift/shims/Visibility.h"
+ 
++#if defined(__powerpc64__)
++// Clang does not support the _Float16 type on powerpc64le, but half values
++// only move through memory as 16-bit patterns and the soft-float ABI passes
++// and returns them as i16 in a GPR, so unsigned short is ABI-compatible (this
++// is what compiler-rt does for targets without a native Float16 type).
++typedef unsigned short __swift_fp16;
++#else
++typedef _Float16 __swift_fp16;
++#endif
++
+ static unsigned toEncoding(float f) {
+   unsigned e;
+   static_assert(sizeof e == sizeof f, "float and int must have the same size");
+@@ -49,15 +59,15 @@
+   return f;
+ }
+ 
+-static unsigned short toEncoding(_Float16 f) {
++static unsigned short toEncoding(__swift_fp16 f) {
+   unsigned short s;
+   static_assert(sizeof s == sizeof f, "_Float16 and short must have the same size");
+   __builtin_memcpy(&s, &f, sizeof f);
+   return s;
+ }
+ 
+-static _Float16 fromEncoding(unsigned short s) {
+-  _Float16 f;
++static __swift_fp16 fromEncoding(unsigned short s) {
++  __swift_fp16 f;
+   static_assert(sizeof s == sizeof f, "_Float16 and short must have the same size");
+   __builtin_memcpy(&f, &s, sizeof f);
+   return f;
+@@ -140,7 +150,7 @@
+ //
+ // Note that F16C doesn't provide this operation, so we still need a software
+ // implementation on those cores.
+-SWIFT_RUNTIME_EXPORT _Float16 __truncdfhf2(double d) {
++SWIFT_RUNTIME_EXPORT __swift_fp16 __truncdfhf2(double d) {
+   // You can't just do (half)(float)x, because that makes the result
+   // susceptible to double-rounding. Instead we need to make the first
+   // rounding use round-to-odd, but that doesn't exist on x86, so we have
+@@ -174,17 +184,17 @@
+ //
+ // There's no risk of rounding problems from the double conversion, because
+ // we're extending.
+-SWIFT_RUNTIME_EXPORT long double __extendhfxf2(_Float16 h) {
++SWIFT_RUNTIME_EXPORT long double __extendhfxf2(__swift_fp16 h) {
+   return __gnu_h2f_ieee(toEncoding(h));
+ }
+ 
+ // This is just an alternative name for __gnu_h2f_ieee
+-SWIFT_RUNTIME_EXPORT float __extendhfsf2(_Float16 h) {
++SWIFT_RUNTIME_EXPORT float __extendhfsf2(__swift_fp16 h) {
+   return __gnu_h2f_ieee(toEncoding(h));
+ }
+ 
+ // Same again but for __gnu_f2h_ieee
+-SWIFT_RUNTIME_EXPORT _Float16 __truncsfhf2(float f) {
++SWIFT_RUNTIME_EXPORT __swift_fp16 __truncsfhf2(float f) {
+   return fromEncoding(__gnu_f2h_ieee(f));
+ }
+ 

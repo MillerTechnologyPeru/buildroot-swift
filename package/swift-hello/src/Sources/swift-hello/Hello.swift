@@ -1,6 +1,8 @@
 #if canImport(Foundation)
 import Foundation
 #endif
+import CxxDemo
+import CxxStdlib
 
 @main
 struct Hello {
@@ -9,6 +11,12 @@ struct Hello {
         #if canImport(Foundation)
         print("Swift Foundation installed")
         #endif
+        // C++ interop
+        let sum = demo.add(40, 2)
+        precondition(sum == 42)
+        print("C++ add(40, 2) = \(sum)")
+        let name: std.string = "Swift"
+        print(String(demo.greeting(name)))
         let task = Task {
             var didCatchError = false
             do { try await errorTest() }
