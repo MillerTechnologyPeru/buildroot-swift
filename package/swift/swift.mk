@@ -39,6 +39,16 @@ SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
 SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-gnu
 endif
 
+# The Debian multiarch tuple, which Clang uses to locate the arch-specific C++
+# headers (bits/c++config.h), as opposed to SWIFT_GCC_ALIAS_TRIPLE which names
+# the GCC install itself. They match for every target except i686, whose install
+# is i686-linux-gnu but whose multiarch tuple is i386-linux-gnu
+# ("clang -print-multiarch").
+SWIFT_GCC_MULTIARCH_TRIPLE = $(SWIFT_GCC_ALIAS_TRIPLE)
+ifeq ($(SWIFT_TARGET_ARCH),i686)
+SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-gnu
+endif
+
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
@@ -253,9 +263,9 @@ define SWIFT_INSTALL_STAGING_CMDS
 	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR) \
 		$(STAGING_DIR)/usr/include/c++/$(SWIFT_GCC_VERSION)
 	# Arch-specific bits (bits/c++config.h) at the multiarch location Clang probes
-	mkdir -p $(STAGING_DIR)/usr/include/$(SWIFT_GCC_ALIAS_TRIPLE)/c++
+	mkdir -p $(STAGING_DIR)/usr/include/$(SWIFT_GCC_MULTIARCH_TRIPLE)/c++
 	ln -sfn $(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME) \
-		$(STAGING_DIR)/usr/include/$(SWIFT_GCC_ALIAS_TRIPLE)/c++/$(SWIFT_GCC_VERSION)
+		$(STAGING_DIR)/usr/include/$(SWIFT_GCC_MULTIARCH_TRIPLE)/c++/$(SWIFT_GCC_VERSION)
 endef
 
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
