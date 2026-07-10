@@ -75,7 +75,14 @@ SWIFT_GCC_INSTALL_DIR = $(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(B
 # Swift compile flags (CMake list) for the CxxStdlib overlay. The overlay's
 # default is "-Xcc --gcc-toolchain=/usr", which resolves to the build machine's
 # GCC instead of the Buildroot cross toolchain.
-SWIFT_CXX_OVERLAY_FLAGS = -Xcc;--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)
+#
+# -no-verify-emitted-module-interface: the overlay is built with library
+# evolution, so the driver re-typechecks the emitted .swiftinterface. That
+# verification re-invocation only sees the flags baked into the interface's
+# swift-module-flags line, which strips the -Xcc paths above, so it cannot find
+# the host-only libstdc++ headers (<chrono>) and fails. Real consumers get the
+# paths from the SwiftPM toolchain file, so skip this internal self-check.
+SWIFT_CXX_OVERLAY_FLAGS = -Xcc;--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME);-no-verify-emitted-module-interface
 
 SWIFTC_FLAGS="-target $(SWIFT_TARGET_NAME) -use-ld=lld \
 -resource-dir ${STAGING_DIR}/usr/lib/swift \
