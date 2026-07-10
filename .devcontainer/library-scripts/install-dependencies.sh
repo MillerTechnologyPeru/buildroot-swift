@@ -49,8 +49,8 @@ apt-get -q install -y \
     clang \
     gnupg
 
-# Swift 6.3.2 is based on LLVM 21, which bookworm does not ship; use apt.llvm.org
-curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key -o /etc/apt/trusted.gpg.d/apt-llvm-org.asc
+# Swift 6.3.3 is based on LLVM 21, which bookworm does not ship; use apt.llvm.org
+curl -fsSL --retry 8 --retry-all-errors --retry-delay 15 https://apt.llvm.org/llvm-snapshot.gpg.key -o /etc/apt/trusted.gpg.d/apt-llvm-org.asc
 echo "deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-21 main" > /etc/apt/sources.list.d/llvm-21.list
 apt-get -q update
 apt-get -q install -y llvm-21-dev

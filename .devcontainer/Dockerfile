@@ -1,4 +1,4 @@
-FROM swift:6.3.2-bookworm
+FROM swift:6.3.3-bookworm
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
