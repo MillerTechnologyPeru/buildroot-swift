@@ -63,10 +63,19 @@ endif
 # not in the staging sysroot
 SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))
 
-# Swift compile flags (CMake list) for the CxxStdlib overlay. The default is
-# "-Xcc --gcc-toolchain=/usr", which would resolve to the build machine's GCC
-# instead of the Buildroot cross toolchain
-SWIFT_CXX_OVERLAY_FLAGS = -Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)
+# The Buildroot cross GCC install directory (holds libgcc and the crt objects).
+# Swift/Clang locate the libstdc++ headers and C++ stdlib module map through
+# Clang's C++ stdlib toolchain search, which needs a *detected* GCC installation
+# -- plain -I flags are not consulted. --gcc-install-dir points Clang straight at
+# this directory; unlike --gcc-toolchain it skips triple-alias matching, which
+# would otherwise fail because the toolchain directory name ($(GNU_TARGET_NAME))
+# carries the "swift" vendor while the target triple carries "unknown".
+SWIFT_GCC_INSTALL_DIR = $(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))
+
+# Swift compile flags (CMake list) for the CxxStdlib overlay. The overlay's
+# default is "-Xcc --gcc-toolchain=/usr", which resolves to the build machine's
+# GCC instead of the Buildroot cross toolchain.
+SWIFT_CXX_OVERLAY_FLAGS = -Xcc;--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)
 
 SWIFTC_FLAGS="-target $(SWIFT_TARGET_NAME) -use-ld=lld \
 -resource-dir ${STAGING_DIR}/usr/lib/swift \
@@ -245,6 +254,7 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '   "target":"$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "dynamic-library-extension":"so",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-cc-flags":[' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-fPIC",' >> $(SWIFT_DESTINATION_FILE)
@@ -268,6 +278,7 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-Xlinker", "--build-id=sha1",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/include",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-resource-dir", "$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
