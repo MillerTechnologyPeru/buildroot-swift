@@ -59,13 +59,22 @@ SWIFT_EXTRA_FLAGS		=
 SWIFTC_EXTRA_FLAGS		= 
 endif
 
+# Buildroot's target libstdc++ headers live in the host GCC toolchain,
+# not in the staging sysroot
+SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))
+
+# Swift compile flags (CMake list) for the CxxStdlib overlay. The default is
+# "-Xcc --gcc-toolchain=/usr", which would resolve to the build machine's GCC
+# instead of the Buildroot cross toolchain
+SWIFT_CXX_OVERLAY_FLAGS = -Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR);-Xcc;-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)
+
 SWIFTC_FLAGS="-target $(SWIFT_TARGET_NAME) -use-ld=lld \
 -resource-dir ${STAGING_DIR}/usr/lib/swift \
 -Xclang-linker -B${STAGING_DIR}/usr/lib \
 -Xclang-linker -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
 -Xcc -I${STAGING_DIR}/usr/include \
--Xcc -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION)) \
--Xcc -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/$(GNU_TARGET_NAME) \
+-Xcc -I$(SWIFT_GCC_CXX_INCLUDE_DIR) \
+-Xcc -I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME) \
 $(SWIFTC_EXTRA_FLAGS) \
 -L${STAGING_DIR}/lib \
 -L${STAGING_DIR}/usr/lib \
@@ -105,9 +114,11 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
 	-DSWIFT_PATH_TO_STRING_PROCESSING_SOURCE=${SWIFT_STRING_PROCESSING_SRCDIR} \
-	-DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF \
-	-DSWIFT_ENABLE_CXX_INTEROP_SWIFT_BRIDGING_HEADER=OFF \
-	-DSWIFT_BUILD_STDLIB_CXX_MODULE=OFF \
+	-DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=ON \
+	-DSWIFT_ENABLE_CXX_INTEROP_SWIFT_BRIDGING_HEADER=ON \
+	-DSWIFT_BUILD_STDLIB_CXX_MODULE=ON \
+	-DSWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS="$(SWIFT_CXX_OVERLAY_FLAGS)" \
+	-DSWIFT_ENABLE_VOLATILE=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_NONESCAPABLE_TYPES=ON \
@@ -193,14 +204,8 @@ define SWIFT_INSTALL_TARGET_CMDS
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
-	# Workaround disabled C++ module
-	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
-	touch $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
 	# Copy runtime libraries and Swift interfaces
 	(cd $(SWIFT_BUILDDIR) && ninja install)
-	# Remove disabled C++ module
-	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.h
-	rm $(SWIFT_BUILDDIR)/lib/swift/linux/libstdcxx.modulemap
 endef
 
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
@@ -240,6 +245,8 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '   "target":"$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "dynamic-library-extension":"so",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-cc-flags":[' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-fPIC",' >> $(SWIFT_DESTINATION_FILE)
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "armv5" ]; then\
@@ -261,6 +268,8 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-Xlinker", "--build-id=sha1",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/include",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xcc", "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-resource-dir", "$(STAGING_DIR)/usr/lib/swift",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xclang-linker", "-B$(STAGING_DIR)/usr/lib",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xclang-linker", "-B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))",' >> $(SWIFT_DESTINATION_FILE)
