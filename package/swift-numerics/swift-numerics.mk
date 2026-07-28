@@ -19,6 +19,10 @@ SWIFT_NUMERICS_CONF_OPTS += \
 	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
 
 define SWIFT_NUMERICS_CONFIGURE_CMDS
+	# Remove our own staged shim module: on a rebuild the compiler would see
+	# _NumericsShims both from the source tree and from staging (redefinition).
+	# It is staged again in the install step.
+	rm -rf $(STAGING_DIR)/usr/lib/swift/_NumericsShims
 	(mkdir -p $(SWIFT_NUMERICS_BUILDDIR) && \
 	cd $(SWIFT_NUMERICS_BUILDDIR) && \
 	rm -f CMakeCache.txt && \

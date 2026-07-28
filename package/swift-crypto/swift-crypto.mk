@@ -34,6 +34,10 @@ define SWIFT_CRYPTO_CONFIGURE_CMDS
 	# Dispatch, which the compiler rejects as a redefinition. Same fix as
 	# swift-foundation / xctest; the module is restored in the install step.
 	rm -rf $(STAGING_DIR)/usr/lib/swift/dispatch
+	# Likewise remove our own staged shim modules for rebuilds; they are staged
+	# again in the install step.
+	rm -rf $(STAGING_DIR)/usr/lib/swift/CCryptoBoringSSL
+	rm -rf $(STAGING_DIR)/usr/lib/swift/CCryptoBoringSSLShims
 	(mkdir -p $(SWIFT_CRYPTO_BUILDDIR) && \
 	cd $(SWIFT_CRYPTO_BUILDDIR) && \
 	rm -f CMakeCache.txt && \

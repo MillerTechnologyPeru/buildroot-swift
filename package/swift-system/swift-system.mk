@@ -19,6 +19,10 @@ SWIFT_SYSTEM_CONF_OPTS += \
 	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
 
 define SWIFT_SYSTEM_CONFIGURE_CMDS
+	# Remove our own staged shim module: on a rebuild the compiler would see
+	# CSystem both from the source tree and from staging (redefinition). It is
+	# staged again in the install step.
+	rm -rf $(STAGING_DIR)/usr/lib/swift/CSystem
 	(mkdir -p $(SWIFT_SYSTEM_BUILDDIR) && \
 	cd $(SWIFT_SYSTEM_BUILDDIR) && \
 	rm -f CMakeCache.txt && \
