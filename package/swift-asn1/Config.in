@@ -1,0 +1,13 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_ASN1
+	bool "swift-asn1"
+	depends on BR2_PACKAGE_SWIFT
+	select BR2_PACKAGE_SWIFT_FOUNDATION
+	help
+	  SwiftASN1 is an implementation of ASN.1 types and DER/BER
+	  serialization in Swift. It is a dependency of swift-crypto.
+
+	  https://github.com/apple/swift-asn1
+
+endif

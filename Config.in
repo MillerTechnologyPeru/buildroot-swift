@@ -10,6 +10,7 @@ menu "Swift libraries"
 
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/xctest/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-system/Config.in"
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-asn1/Config.in"
 
 endmenu
 
