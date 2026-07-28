@@ -15,6 +15,7 @@ menu "Swift libraries"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-collections/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-atomics/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-numerics/Config.in"
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-http-types/Config.in"
 
 endmenu
 
