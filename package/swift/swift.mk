@@ -20,23 +20,32 @@ ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
 endif
 
+# SWIFT_LIBC_NAME is the libc component of the target triple. It mirrors
+# buildroot's own $(LIBC) (see package/Makefile.in) so the triple we hand to
+# swiftc/clang matches the sysroot buildroot actually produced.
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_LIBC_NAME = musl
+else
+SWIFT_LIBC_NAME = gnu
+endif
+
 # SWIFT_GCC_ALIAS_TRIPLE is the standard multiarch triple Clang recognises when
 # scanning the sysroot for a GCC install (see SWIFT_INSTALL_STAGING_CMDS). It
 # differs from $(GNU_TARGET_NAME), whose "swift" vendor Clang does not accept,
 # and from $(SWIFT_TARGET_NAME), which for ARM keeps the armvN sub-arch while
 # Clang normalises it to plain "arm".
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
-SWIFT_TARGET_NAME		= armv7-unknown-linux-gnueabihf
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
+SWIFT_TARGET_NAME		= armv7-unknown-linux-$(SWIFT_LIBC_NAME)eabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv6)
-SWIFT_TARGET_NAME		= armv6-unknown-linux-gnueabihf
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
+SWIFT_TARGET_NAME		= armv6-unknown-linux-$(SWIFT_LIBC_NAME)eabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
-SWIFT_TARGET_NAME		= armv5-unknown-linux-gnueabi
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabi
+SWIFT_TARGET_NAME		= armv5-unknown-linux-$(SWIFT_LIBC_NAME)eabi
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabi
 else
-SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
-SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-gnu
+SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-$(SWIFT_LIBC_NAME)
+SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-$(SWIFT_LIBC_NAME)
 endif
 
 # The Debian multiarch tuple, which Clang uses to locate the arch-specific C++
@@ -46,7 +55,7 @@ endif
 # ("clang -print-multiarch").
 SWIFT_GCC_MULTIARCH_TRIPLE = $(SWIFT_GCC_ALIAS_TRIPLE)
 ifeq ($(SWIFT_TARGET_ARCH),i686)
-SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-gnu
+SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-$(SWIFT_LIBC_NAME)
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -190,6 +199,16 @@ SWIFT_CONF_OPTS = \
 # which clang cannot generate on these targets
 ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mipsel mips64el),)
 SWIFT_CONF_OPTS += -DSWIFT_STDLIB_OVERRIDABLE_RETAIN_RELEASE=FALSE
+endif
+
+# The CMake build below invokes the native clang/clang++ from host-swift
+# directly (see SWIFT_CONFIGURE_CMDS), bypassing buildroot's toolchain
+# wrapper, so BR2_CCACHE's automatic HOSTCC/TARGET_CC wrapping never sees it.
+# Wire the compiler launcher in explicitly when BR2_CCACHE is enabled.
+ifeq ($(BR2_CCACHE),y)
+SWIFT_CONF_OPTS += \
+	-DCMAKE_C_COMPILER_LAUNCHER=$(CCACHE) \
+	-DCMAKE_CXX_COMPILER_LAUNCHER=$(CCACHE)
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
