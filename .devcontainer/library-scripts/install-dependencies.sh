@@ -13,6 +13,7 @@ apt-get -q install -y \
     binutils \
     build-essential \
     bzip2 \
+    ccache \
     cpio \
     debianutils \
     diffutils \
