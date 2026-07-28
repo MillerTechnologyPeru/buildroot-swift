@@ -21,6 +21,11 @@ SWIFT_ASN1_CONF_OPTS += \
 	-DFoundation_DIR="$(SWIFT_FOUNDATION_BUILDDIR)/cmake/modules" \
 
 define SWIFT_ASN1_CONFIGURE_CMDS
+	# Workaround Dispatch defined with cmake and module: the dispatch build tree
+	# (via dispatch_DIR) and the staging sysroot both ship a module.modulemap for
+	# Dispatch, which the compiler rejects as a redefinition. Same fix as
+	# swift-foundation / xctest; the module is restored in the install step.
+	rm -rf $(STAGING_DIR)/usr/lib/swift/dispatch
 	(mkdir -p $(SWIFT_ASN1_BUILDDIR) && \
 	cd $(SWIFT_ASN1_BUILDDIR) && \
 	rm -f CMakeCache.txt && \
@@ -44,6 +49,8 @@ endef
 define SWIFT_ASN1_INSTALL_STAGING_CMDS
 	find $(SWIFT_ASN1_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
 	find $(SWIFT_ASN1_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	# Restore the Dispatch module removed before configure
+	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)
 endef
 
 define SWIFT_ASN1_INSTALL_TARGET_CMDS
