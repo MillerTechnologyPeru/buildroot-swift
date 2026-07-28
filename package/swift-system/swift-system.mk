@@ -45,7 +45,13 @@ endef
 # which during a cross build resolve to the build host's arch, not the target's.
 define SWIFT_SYSTEM_INSTALL_STAGING_CMDS
 	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
 	find $(SWIFT_SYSTEM_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	# Stage the CSystem clang module (headers + modulemap). SystemPackage is
+	# built without library evolution, so consumers transitively require every
+	# module it imports; Clang finds it as <search dir>/CSystem/module.modulemap.
+	mkdir -p $(STAGING_DIR)/usr/lib/swift/CSystem
+	cp -rf $(SWIFT_SYSTEM_SRCDIR)/Sources/CSystem/include/* $(STAGING_DIR)/usr/lib/swift/CSystem/
 endef
 
 define SWIFT_SYSTEM_INSTALL_TARGET_CMDS

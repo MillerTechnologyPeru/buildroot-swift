@@ -27,6 +27,9 @@ SWIFT_HELLO_DEPENDENCIES += swift-crypto
 endif
 ifeq ($(BR2_PACKAGE_SWIFT_HTTP_TYPES),y)
 SWIFT_HELLO_DEPENDENCIES += swift-http-types
+# SwiftPM-built libraries carry no autolink (-module-link-name) information,
+# unlike the CMake-built packages, so consumers must link them explicitly.
+SWIFT_HELLO_BUILD_OPTS += -Xlinker -lHTTPTypes -Xlinker -lHTTPTypesFoundation
 endif
 
 $(eval $(swift-package))

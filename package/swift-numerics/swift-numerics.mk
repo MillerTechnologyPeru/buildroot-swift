@@ -40,7 +40,13 @@ endef
 # See swift-system.mk for why we hand-copy instead of `ninja install`.
 define SWIFT_NUMERICS_INSTALL_STAGING_CMDS
 	find $(SWIFT_NUMERICS_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
+	find $(SWIFT_NUMERICS_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
 	find $(SWIFT_NUMERICS_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	# Stage the _NumericsShims clang module (headers + modulemap). Numerics is
+	# built without library evolution, so consumers transitively require every
+	# module it imports.
+	mkdir -p $(STAGING_DIR)/usr/lib/swift/_NumericsShims
+	cp -rf $(SWIFT_NUMERICS_SRCDIR)/Sources/_NumericsShims/include/* $(STAGING_DIR)/usr/lib/swift/_NumericsShims/
 endef
 
 define SWIFT_NUMERICS_INSTALL_TARGET_CMDS
