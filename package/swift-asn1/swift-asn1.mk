@@ -13,6 +13,8 @@ SWIFT_ASN1_BUILDDIR = $(SWIFT_ASN1_SRCDIR)/build
 # SwiftASN1 links Foundation and dispatch on non-Darwin, so point find_package
 # at the config packages emitted in the corelib build trees (same as xctest).
 SWIFT_ASN1_CONF_OPTS += \
+	-DCMAKE_SYSTEM_NAME=Linux \
+	-DCMAKE_SYSTEM_PROCESSOR=$(SWIFT_TARGET_ARCH) \
 	-DCMAKE_Swift_FLAGS=${SWIFTC_FLAGS} \
 	-DCMAKE_Swift_FLAGS_DEBUG="" \
 	-DCMAKE_Swift_FLAGS_RELEASE="" \
