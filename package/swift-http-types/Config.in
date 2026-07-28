@@ -1,0 +1,13 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_HTTP_TYPES
+	bool "swift-http-types"
+	depends on BR2_PACKAGE_SWIFT
+	select BR2_PACKAGE_SWIFT_FOUNDATION
+	help
+	  Swift HTTP Types provides version-independent HTTP currency types
+	  (the HTTPTypes and HTTPTypesFoundation modules).
+
+	  https://github.com/apple/swift-http-types
+
+endif

@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Tue, 28 Jul 2026 00:00:00 -0400
+Subject: [PATCH] Build HTTPTypes products as dynamic libraries
+
+Upstream declares the HTTPTypes and HTTPTypesFoundation library products
+without an explicit type, so SwiftPM builds them as static archives. Buildroot
+installs Swift modules as shared libraries in the Swift resource directory, so
+force both products to build as dynamic libraries.
+---
+ Package.swift | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/Package.swift
++++ b/Package.swift
+@@ -7,4 +7,4 @@
+     products: [
+-        .library(name: "HTTPTypes", targets: ["HTTPTypes"]),
+-        .library(name: "HTTPTypesFoundation", targets: ["HTTPTypesFoundation"]),
++        .library(name: "HTTPTypes", type: .dynamic, targets: ["HTTPTypes"]),
++        .library(name: "HTTPTypesFoundation", type: .dynamic, targets: ["HTTPTypesFoundation"]),
+     ],

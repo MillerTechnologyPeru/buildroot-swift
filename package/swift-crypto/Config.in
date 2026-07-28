@@ -1,0 +1,16 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_CRYPTO
+	bool "swift-crypto"
+	depends on BR2_PACKAGE_SWIFT
+	select BR2_PACKAGE_SWIFT_FOUNDATION
+	select BR2_PACKAGE_SWIFT_ASN1
+	help
+	  Swift Crypto is the open-source implementation of Apple's CryptoKit
+	  API (the Crypto module). It vendors and statically links BoringSSL, so
+	  it needs no system OpenSSL. On architectures for which BoringSSL ships
+	  no assembly it is built as portable C (OPENSSL_NO_ASM).
+
+	  https://github.com/apple/swift-crypto
+
+endif

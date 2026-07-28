@@ -1,0 +1,67 @@
+### Swift System (SystemPackage)
+SWIFT_SYSTEM_VERSION = 1.5.0
+SWIFT_SYSTEM_SITE = $(call github,apple,swift-system,$(SWIFT_SYSTEM_VERSION))
+SWIFT_SYSTEM_LICENSE = Apache-2.0
+SWIFT_SYSTEM_LICENSE_FILES = LICENSE.txt
+SWIFT_SYSTEM_INSTALL_STAGING = YES
+SWIFT_SYSTEM_INSTALL_TARGET = YES
+SWIFT_SYSTEM_SUPPORTS_IN_SOURCE_BUILD = NO
+SWIFT_SYSTEM_DEPENDENCIES = swift
+
+SWIFT_SYSTEM_BUILDDIR = $(SWIFT_SYSTEM_SRCDIR)/build
+
+SWIFT_SYSTEM_CONF_OPTS += \
+	-DCMAKE_SYSTEM_NAME=Linux \
+	-DCMAKE_SYSTEM_PROCESSOR=$(SWIFT_CMAKE_PROCESSOR) \
+	-DCMAKE_Swift_FLAGS=${SWIFTC_FLAGS} \
+	-DCMAKE_Swift_FLAGS_DEBUG="" \
+	-DCMAKE_Swift_FLAGS_RELEASE="" \
+	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
+
+define SWIFT_SYSTEM_CONFIGURE_CMDS
+	# Remove our own staged shim module: on a rebuild the compiler would see
+	# CSystem both from the source tree and from staging (redefinition). It is
+	# staged again in the install step.
+	rm -rf $(STAGING_DIR)/usr/lib/swift/CSystem
+	(mkdir -p $(SWIFT_SYSTEM_BUILDDIR) && \
+	cd $(SWIFT_SYSTEM_BUILDDIR) && \
+	rm -f CMakeCache.txt && \
+	PATH=$(BR_PATH):$(SWIFT_NATIVE_PATH) \
+	$(SWIFT_SYSTEM_CONF_ENV) $(BR2_CMAKE) -S $(SWIFT_SYSTEM_SRCDIR) -B $(SWIFT_SYSTEM_BUILDDIR) -G Ninja \
+		-DCMAKE_INSTALL_PREFIX="/usr" \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_TESTING=NO \
+		-DCMAKE_BUILD_TYPE=$(if $(BR2_ENABLE_RUNTIME_DEBUG),Debug,Release) \
+		-DCMAKE_C_COMPILER=$(SWIFT_NATIVE_PATH)/clang \
+		-DCMAKE_C_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))" \
+		-DCMAKE_C_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR)" \
+		$(SWIFT_SYSTEM_CONF_OPTS) \
+	)
+endef
+
+define SWIFT_SYSTEM_BUILD_CMDS
+	(cd $(SWIFT_SYSTEM_BUILDDIR) && ninja)
+endef
+
+# Install the built module + shared library into the Swift resource directory,
+# matching the layout swift-foundation uses: the shared library goes in
+# lib/swift/linux and the Swift module files go in the arch subdir. We copy by
+# hand rather than `ninja install` because the upstream install rules derive the
+# target arch/triple from CMAKE_SYSTEM_PROCESSOR / `swift -print-target-info`,
+# which during a cross build resolve to the build host's arch, not the target's.
+define SWIFT_SYSTEM_INSTALL_STAGING_CMDS
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	# Stage the CSystem clang module (headers + modulemap). SystemPackage is
+	# built without library evolution, so consumers transitively require every
+	# module it imports; Clang finds it as <search dir>/CSystem/module.modulemap.
+	mkdir -p $(STAGING_DIR)/usr/lib/swift/CSystem
+	cp -rf $(SWIFT_SYSTEM_SRCDIR)/Sources/CSystem/include/* $(STAGING_DIR)/usr/lib/swift/CSystem/
+endef
+
+define SWIFT_SYSTEM_INSTALL_TARGET_CMDS
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(TARGET_DIR)/usr/lib/ \;
+endef
+
+$(eval $(generic-package))

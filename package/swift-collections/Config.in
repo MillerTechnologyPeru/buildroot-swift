@@ -1,0 +1,13 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_COLLECTIONS
+	bool "swift-collections"
+	depends on BR2_PACKAGE_SWIFT
+	help
+	  Swift Collections is a package of production-grade data structures
+	  (the Collections umbrella module: DequeModule, OrderedCollections,
+	  BitCollections, HeapModule, ...).
+
+	  https://github.com/apple/swift-collections
+
+endif

@@ -89,13 +89,13 @@ define $(2)_INSTALL_STAGING_CMDS
 	$$(foreach d,$$($(2)_EXECUTABLES),\
 		cp -f $$($(2)_BUILDDIR)/$$(d) $(STAGING_DIR)/usr/bin/
 	)
-	# Copy dynamic libraries
+	# Copy dynamic libraries. Modern SwiftPM emits the Swift module files
+	# (.swiftmodule, .swiftdoc, ...) under a Modules/ subdirectory of the build
+	# dir; .swiftsourceinfo / .abi.json are optional and copied best-effort.
 	$$(foreach d,$$($(2)_LIBRARIES),\
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(STAGING_DIR)/usr/lib/swift/linux/
-		cp -f $$($(2)_BUILDDIR)/$$(d).swiftdoc $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/$$(d).swiftmodule $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/$$(d).swiftsourceinfo $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/$$(d).abi.json $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
+		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(STAGING_DIR)/usr/lib/swift/linux/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
 	)
 endef
 endif
@@ -110,7 +110,7 @@ define $(2)_INSTALL_TARGET_CMDS
 	)
 	# Copy dynamic libraries
 	$$(foreach d,$$($(2)_LIBRARIES),\
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(TARGET_DIR)/usr/lib/
+		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(TARGET_DIR)/usr/lib/ ; \
 	)
 endef
 endif
@@ -122,13 +122,13 @@ define $(2)_INSTALL_CMDS
 	$$(foreach d,$$($(2)_EXECUTABLES),\
 		cp -f $$($(2)_BUILDDIR)/$$(d) $(HOST_DIR)/usr/bin/
 	)
-	# Copy dynamic libraries
+	# Copy dynamic libraries. Modern SwiftPM emits the Swift module files
+	# (.swiftmodule, .swiftdoc, ...) under a Modules/ subdirectory of the build
+	# dir; .swiftsourceinfo / .abi.json are optional and copied best-effort.
 	$$(foreach d,$$($(2)_LIBRARIES),\
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(HOST_DIR)/usr/lib/swift/linux/
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).swiftdoc $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).swiftmodule $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).swiftsourceinfo $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).abi.json $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/
+		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(HOST_DIR)/usr/lib/swift/linux/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
 	)
 endef
 endif

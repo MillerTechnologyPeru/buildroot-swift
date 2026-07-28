@@ -1,0 +1,12 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_NUMERICS
+	bool "swift-numerics"
+	depends on BR2_PACKAGE_SWIFT
+	help
+	  Swift Numerics provides numerical computing modules for Swift
+	  (Numerics, RealModule, ComplexModule).
+
+	  https://github.com/apple/swift-numerics
+
+endif

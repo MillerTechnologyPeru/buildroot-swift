@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Tue, 28 Jul 2026 00:00:00 -0400
+Subject: [PATCH] Build BoringSSL without assembly on unsupported architectures
+
+swift-crypto's vendored BoringSSL only provides perlasm-generated assembly for
+x86_64 and aarch64 (and Windows); every other target -- including 32-bit arm,
+i386 and powerpc64le -- hits a hard message(FATAL_ERROR ...) with no way to
+fall back to a portable build.
+
+Replace that fatal error with the pure-C BoringSSL configuration by defining
+OPENSSL_NO_ASM for the CCryptoBoringSSL target. This is a supported BoringSSL
+build mode: the C implementations are always compiled and the assembly is only
+an optimization guarded by !defined(OPENSSL_NO_ASM). Targets that do have
+assembly (x86_64, aarch64) are unaffected.
+---
+ Sources/CCryptoBoringSSL/CMakeLists.txt | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/Sources/CCryptoBoringSSL/CMakeLists.txt
++++ b/Sources/CCryptoBoringSSL/CMakeLists.txt
+@@ -356,3 +356,7 @@
+ else()
+-   message(FATAL_ERROR "platform sources are not defined here for ${CMAKE_SYSTEM_NAME} on ${CMAKE_SYSTEM_PROCESSOR}")
++  # No perlasm-generated assembly is vendored for this architecture. Build the
++  # portable pure-C implementation instead of failing. OPENSSL_NO_ASM is a
++  # supported BoringSSL configuration; the assembly is only an optimization
++  # guarded by !defined(OPENSSL_NO_ASM).
++  target_compile_definitions(CCryptoBoringSSL PRIVATE OPENSSL_NO_ASM)
+ endif()
