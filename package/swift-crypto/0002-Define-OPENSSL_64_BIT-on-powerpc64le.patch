@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Tue, 28 Jul 2026 00:00:00 -0400
+Subject: [PATCH] Define OPENSSL_64_BIT on powerpc64le
+
+BoringSSL's target detection does not know PowerPC (upstream removed
+ppc64le support), so on powerpc64le neither OPENSSL_32_BIT nor
+OPENSSL_64_BIT gets defined and every header errors out with
+"Must define either OPENSSL_32_BIT or OPENSSL_64_BIT".
+
+powerpc64le is a standard 64-bit two's-complement little-endian
+architecture, which is exactly what the portable C code supports (see the
+comment above the #error). Add a branch defining OPENSSL_64_BIT; it is
+used together with the OPENSSL_NO_ASM build from 0001-*.patch. The
+OPENSSL_PPC64LE macro is deliberately not defined so no stale
+arch-specific paths are enabled.
+---
+ Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_target.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_target.h
++++ b/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_target.h
+@@ -54,6 +54,12 @@
+ #define OPENSSL_32_BIT
+ #elif defined(__myriad2__)
+ #define OPENSSL_32_BIT
++#elif defined(__powerpc64__) && defined(__BYTE_ORDER__) && \
++    __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++// powerpc64le is not an officially supported BoringSSL target, but it is a
++// standard 64-bit two's-complement little-endian architecture, which the
++// portable C code supports (used with OPENSSL_NO_ASM by the Buildroot build).
++#define OPENSSL_64_BIT
+ #else
+ // The list above enumerates the platforms that BoringSSL supports. For these
+ // platforms we keep a reasonable bar of not breaking them: automated test
