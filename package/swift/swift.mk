@@ -80,6 +80,26 @@ endif
 
 SWIFT_GCC_VERSION = $(call qstrip,$(BR2_GCC_VERSION))
 
+# CMAKE_SYSTEM_PROCESSOR value for the CMake-based Swift library packages
+# (swift-system, swift-asn1, swift-crypto, ...). Their SwiftSupport.cmake
+# whitelists uname-style processor names and hard-errors on anything else:
+# armv7 must be spelled armv7l, armv6 armv6l, powerpc64le ppc64le. armv5 has
+# no entry at all, so the closest whitelisted value is used; the result only
+# feeds the whitelist and install paths we do not use.
+ifeq ($(SWIFT_TARGET_ARCH),armv7)
+SWIFT_CMAKE_PROCESSOR = armv7l
+else ifeq ($(SWIFT_TARGET_ARCH),armv6)
+SWIFT_CMAKE_PROCESSOR = armv6l
+else ifeq ($(SWIFT_TARGET_ARCH),armv5)
+SWIFT_CMAKE_PROCESSOR = armv6l
+else ifeq ($(SWIFT_TARGET_ARCH),powerpc64le)
+SWIFT_CMAKE_PROCESSOR = ppc64le
+else ifeq ($(SWIFT_TARGET_ARCH),powerpc)
+SWIFT_CMAKE_PROCESSOR = ppc64
+else
+SWIFT_CMAKE_PROCESSOR = $(SWIFT_TARGET_ARCH)
+endif
+
 # Buildroot's target libstdc++ headers live in the host GCC toolchain,
 # not in the staging sysroot
 SWIFT_GCC_CXX_INCLUDE_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(SWIFT_GCC_VERSION)
