@@ -12,6 +12,7 @@ menu "Swift libraries"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-system/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-asn1/Config.in"
 	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-crypto/Config.in"
+	source "$BR2_EXTERNAL_SWIFT_PATH/package/swift-collections/Config.in"
 
 endmenu
 
