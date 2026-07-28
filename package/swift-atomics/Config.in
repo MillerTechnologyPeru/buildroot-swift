@@ -1,0 +1,12 @@
+if BR2_PACKAGE_SWIFT
+
+config BR2_PACKAGE_SWIFT_ATOMICS
+	bool "swift-atomics"
+	depends on BR2_PACKAGE_SWIFT
+	help
+	  Swift Atomics provides low-level atomic operations for Swift (the
+	  Atomics module).
+
+	  https://github.com/apple/swift-atomics
+
+endif
