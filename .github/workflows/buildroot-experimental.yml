@@ -30,34 +30,6 @@ jobs:
             name: build-${{ matrix.config }}
             path: /workspaces/buildroot/output/images
 
-    build-musl:
-        name: Build Swift for Buildroot (x86_64 musl)
-        strategy:
-          matrix:
-            config: ["x86_64_musl"]
-        runs-on: ubuntu-latest
-        container: swift:6.3.3-bookworm
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-        - name: Build
-          run: |
-            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export SWIFT_TARGET_ARCH=${{ matrix.config }}
-            export DEBIAN_FRONTEND=noninteractive
-            export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.3.3-RELEASE/swift-6.3.3-x86_64-RELEASE-Debian12.tar.gz
-            apt update
-            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
-        - name: Archive Build artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: build-${{ matrix.config }}
-            path: ./output/${{ matrix.config }}/images
-
     build-ppc32:
         name: Build Swift for Buildroot (powerpc)
         strategy:
