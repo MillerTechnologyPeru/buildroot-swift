@@ -35,6 +35,16 @@ else
 SWIFT_LIB_SUBDIR = linux
 endif
 
+# librt for the CMake-based Swift packages that link it (libdispatch,
+# swift-foundation). musl implements the rt functions in libc and ships an
+# empty librt.a for compatibility, installed in /lib since buildroot configures
+# musl with --libdir=/lib; glibc's lives in /usr/lib.
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_LIBRT = $(STAGING_DIR)/lib/librt.a
+else
+SWIFT_LIBRT = $(STAGING_DIR)/usr/lib/librt.a
+endif
+
 ################################################################################
 # inner-swift-package -- defines how the configuration, compilation and
 # installation of a Go package should be done, implements a few hooks to tune
