@@ -68,14 +68,14 @@ endef
 
 define SWIFT_FOUNDATION_INSTALL_STAGING_CMDS
 	# Copy libraries
-	cp $(SWIFT_FOUNDATION_BUILDDIR)/lib/*.so $(STAGING_DIR)/usr/lib/swift/linux/
+	cp $(SWIFT_FOUNDATION_BUILDDIR)/lib/*.so $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/
 	# Copy CoreFoundation module
 	mkdir -p ${STAGING_DIR}/usr/lib/swift/CoreFoundation
 	cp $(SWIFT_FOUNDATION_SRCDIR)/Sources/CoreFoundation/include/*.h ${STAGING_DIR}/usr/lib/swift/CoreFoundation/ 
 	touch ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	echo 'framework module CoreFoundation [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CoreFoundation/CoreFoundation.h" }' > ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	# Copy Swift modules
-	cp $(SWIFT_FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/
+	cp $(SWIFT_FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/
 	cp -rf $(SWIFT_FOUNDATION_BUILDDIR)/_CModulesForClients/*  ${STAGING_DIR}/usr/lib/swift/
 	# Restore Dispatch headers
 	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)
