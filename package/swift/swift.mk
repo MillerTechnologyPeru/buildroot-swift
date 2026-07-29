@@ -194,6 +194,7 @@ SWIFT_CONF_OPTS = \
 	-DSWIFT_INCLUDE_TEST_BINARIES=OFF \
     -DSWIFT_BUILD_TEST_SUPPORT_MODULES=OFF \
 	-DZLIB_LIBRARY=$(STAGING_DIR)/usr/lib/libz.so \
+	-DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=FALSE \
 
 # The overridable retain/release fast path uses indirect musttail calls,
 # which clang cannot generate on these targets
