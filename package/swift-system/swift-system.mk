@@ -45,14 +45,14 @@ endef
 
 # Install the built module + shared library into the Swift resource directory,
 # matching the layout swift-foundation uses: the shared library goes in
-# lib/swift/linux and the Swift module files go in the arch subdir. We copy by
+# the platform subdir and the Swift module files go in the arch subdir. We copy by
 # hand rather than `ninja install` because the upstream install rules derive the
 # target arch/triple from CMAKE_SYSTEM_PROCESSOR / `swift -print-target-info`,
 # which during a cross build resolve to the build host's arch, not the target's.
 define SWIFT_SYSTEM_INSTALL_STAGING_CMDS
-	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_SYSTEM_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_SYSTEM_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/ \;
 	# Stage the CSystem clang module (headers + modulemap). SystemPackage is
 	# built without library evolution, so consumers transitively require every
 	# module it imports; Clang finds it as <search dir>/CSystem/module.modulemap.
