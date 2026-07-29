@@ -69,12 +69,12 @@ endef
 # shared modules (Crypto, ...) are copied; the vendored BoringSSL/XKCP static
 # libraries are linked into libCrypto.so and need no separate install.
 define SWIFT_CRYPTO_INSTALL_STAGING_CMDS
-	find $(SWIFT_CRYPTO_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
+	find $(SWIFT_CRYPTO_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
 	# Static helper libraries (BoringSSL, shims, CryptoBoringWrapper): consumers
 	# autolink these names via the Crypto swiftmodule, so they must be on the
 	# library search path even though they are already linked into libCrypto.so.
-	find $(SWIFT_CRYPTO_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_CRYPTO_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	find $(SWIFT_CRYPTO_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_CRYPTO_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/ \;
 	# Stage the C clang modules (headers + modulemaps). Crypto is built without
 	# library evolution, so consumers transitively require every module it
 	# imports.
