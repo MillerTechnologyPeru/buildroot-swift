@@ -9,8 +9,10 @@ sources already support via canImport(SwiftMusl) -- is never built.
 Select the overlay from the configured triple: drop LINUX from the
 Glibc overlay's SDKs and add it to the Musl overlay's (including the
 musl.modulemap/SwiftMusl.h resource install) when the triple names a
-musl environment. Configurations with the default gnu triples are
-unchanged.
+musl environment, and skip generating and installing the glibc
+modulemap for such a target, since nothing builds against it and the
+install would fail on the missing file. Configurations with the default
+gnu triples are unchanged.
 
 --- a/stdlib/public/Platform/CMakeLists.txt
 +++ b/stdlib/public/Platform/CMakeLists.txt
@@ -48,3 +50,16 @@ unchanged.
      continue()
    endif()
  
+@@ -197,6 +206,12 @@
+     continue()
+   endif()
+ 
++  # A musl LINUX SDK builds the Musl overlay in place of the Glibc one, so it
++  # has no glibc modulemap to generate or install.
++  if("${sdk}" STREQUAL "LINUX" AND NOT "LINUX" IN_LIST swiftGlibc_target_sdks)
++    continue()
++  endif()
++
+   foreach(arch ${SWIFT_SDK_${sdk}_ARCHITECTURES})
+     set(arch_subdir "${SWIFT_SDK_${sdk}_LIB_SUBDIR}/${arch}")
+     set(module_dir "${SWIFTLIB_DIR}/${arch_subdir}")
