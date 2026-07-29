@@ -145,7 +145,7 @@ $(SWIFTC_EXTRA_FLAGS) \
 -L${STAGING_DIR}/lib \
 -L${STAGING_DIR}/usr/lib \
 -L${STAGING_DIR}/usr/lib/swift \
--L${STAGING_DIR}/usr/lib/swift/linux \
+-L${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR) \
 -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
 -sdk ${STAGING_DIR} \
 "
@@ -177,6 +177,7 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_SDKS=LINUX \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_PATH=${STAGING_DIR}  \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_TRIPLE=$(SWIFT_TARGET_NAME) \
+    -DSWIFT_SDK_LINUX_LIB_SUBDIR_OVERRIDE=$(SWIFT_LIB_SUBDIR) \
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${LIBDISPATCH_SRCDIR} \
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
@@ -292,7 +293,7 @@ define SWIFT_BUILD_CMDS
 endef
 
 define SWIFT_INSTALL_TARGET_CMDS
-	cp -f $(SWIFT_BUILDDIR)/lib/swift/linux/*.so $(TARGET_DIR)/usr/lib
+	cp -f $(SWIFT_BUILDDIR)/lib/swift/$(SWIFT_LIB_SUBDIR)/*.so $(TARGET_DIR)/usr/lib
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
@@ -374,12 +375,12 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-target", "$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-use-ld=lld",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-tools-directory", "$(SWIFT_NATIVE_PATH)",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-rpath", "-Xlinker", "/usr/lib/swift/linux",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-rpath", "-Xlinker", "/usr/lib/swift/$(SWIFT_LIB_SUBDIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)/lib",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/linux",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "--build-id=sha1",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/include",' >> $(SWIFT_DESTINATION_FILE)
