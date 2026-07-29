@@ -1,0 +1,28 @@
+Retarget Glibc module dependencies to Musl on musl targets
+
+When the LINUX SDK is configured with a musl triple, the Musl overlay is
+built in place of the Glibc one, but stdlib components still declare
+SWIFT_MODULE_DEPENDS_LINUX Glibc, so ninja fails with e.g.:
+
+  ninja: error: 'stdlib/public/Distributed/swiftGlibc-swiftmodule-linux-x86_64',
+  needed by 'stdlib/public/Distributed/LINUX/x86_64/Distributed.o',
+  missing and no known rule to make it
+
+Rewrite Glibc to Musl in the flattened per-SDK dependency list for such
+configurations, mirroring what the LINUX_STATIC dependency lists declare
+by hand. Configurations with gnu triples are unchanged.
+
+--- a/stdlib/cmake/modules/AddSwiftStdlib.cmake
++++ b/stdlib/cmake/modules/AddSwiftStdlib.cmake
+@@ -2250,6 +2250,11 @@
+     elseif(sdk STREQUAL "LINUX")
+       list(APPEND swiftlib_module_depends_flattened
+            ${SWIFTLIB_SWIFT_MODULE_DEPENDS_LINUX})
++      # When the LINUX SDK targets a musl environment the Musl overlay is
++      # built in place of the Glibc one, so retarget dependencies on it.
++      if(SWIFT_SDK_LINUX_ARCH_${SWIFT_HOST_VARIANT_ARCH}_TRIPLE MATCHES "musl")
++        list(TRANSFORM swiftlib_module_depends_flattened REPLACE "^Glibc$" "Musl")
++      endif()
+     elseif(sdk STREQUAL "ANDROID")
+       list(APPEND swiftlib_module_depends_flattened
+            ${SWIFTLIB_SWIFT_MODULE_DEPENDS_ANDROID})
