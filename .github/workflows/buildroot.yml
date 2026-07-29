@@ -6,7 +6,7 @@ jobs:
         strategy:
           fail-fast: false
           matrix:
-            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
+            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "x86_64_musl", "i386", "ppc64le"]
         runs-on: ubuntu-latest
         container: colemancda/buildroot-swift:swift_${{ matrix.arch }}_defconfig
         steps:
@@ -34,41 +34,3 @@ jobs:
             name: swift-hello-${{ matrix.arch }}
             path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/target/usr/bin/swift-hello
 
-    build-musl:
-        name: Build Swift for Buildroot (musl)
-        strategy:
-          fail-fast: false
-          matrix:
-            arch: ["x86_64_musl"]
-        runs-on: ubuntu-latest
-        container: swift:6.3.3-bookworm
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-        - name: Build
-          run: |
-            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-            export SWIFT_TARGET_ARCH=${{ matrix.arch }}
-            export DEBIAN_FRONTEND=noninteractive
-            export DEBCONF_NONINTERACTIVE_SEEN=true
-            export SWIFT_BIN_URL=https://github.com/MillerTechnologyPeru/swift/releases/download/swift-6.3.3-RELEASE/swift-6.3.3-x86_64-RELEASE-Debian12.tar.gz
-            apt update
-            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
-            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
-            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
-        - name: Archive Build artifacts
-          uses: actions/upload-artifact@v4.5.0
-          with:
-            name: build-${{ matrix.arch }}
-            path: ./output/${{ matrix.arch }}/images/rootfs.tar
-        - name: Build Test
-          run: |
-              export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
-              export SWIFT_TARGET_ARCH=${{ matrix.arch }}
-              $SWIFT_BUILDROOT/.devcontainer/build-scripts/build-test.sh
-        - name: Upload test binary
-          uses: actions/upload-artifact@v4.5.0
-          with:
-            name: swift-hello-${{ matrix.arch }}
-            path: ./output/${{ matrix.arch }}/target/usr/bin/swift-hello
