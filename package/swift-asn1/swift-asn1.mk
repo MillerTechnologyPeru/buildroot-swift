@@ -50,8 +50,8 @@ endef
 
 # See swift-system.mk for why we hand-copy instead of `ninja install`.
 define SWIFT_ASN1_INSTALL_STAGING_CMDS
-	find $(SWIFT_ASN1_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_ASN1_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	find $(SWIFT_ASN1_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_ASN1_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/ \;
 	# Restore the Dispatch module removed before configure
 	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)
 endef
