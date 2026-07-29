@@ -256,6 +256,19 @@ SWIFT_CONF_OPTS	+= \
 else
 endif
 
+# The stdlib build compiles libdispatch from the clone in the host-swift tree,
+# which buildroot's patch infrastructure never touches. Apply the same fix as
+# package/libswiftdispatch/0001-Run-configure-checks-with-_GNU_SOURCE-on-musl.patch:
+# musl does not define __GNU_LIBRARY__, so libdispatch's configure checks run
+# without -D_GNU_SOURCE and miss program_invocation_short_name, tripping the
+# #error in shims/getprogname.h. The sed is a no-op once applied (and on trees
+# already carrying the fix), so it is safe to run on every configure.
+define SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
+	$(SED) 's/check_symbol_exists(__GNU_LIBRARY__ "features.h" _GNU_SOURCE)/set(_GNU_SOURCE 1)/' \
+		$(LIBDISPATCH_SRCDIR)/CMakeLists.txt
+endef
+SWIFT_PRE_CONFIGURE_HOOKS += SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
+
 define SWIFT_CONFIGURE_CMDS
 	# Configure for Ninja
 	(mkdir -p $(SWIFT_BUILDDIR) && \
