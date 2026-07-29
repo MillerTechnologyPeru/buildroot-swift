@@ -25,6 +25,16 @@ HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
 SWIFT_BIN = /usr/bin/swift
 SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
 
+# The Swift resource platform directory. The compiler derives it from the
+# target triple (getPlatformNameForTriple): "musl" for *-linux-musl triples,
+# "linux" for glibc ones. Runtime libraries and module files must be installed
+# under this name for the compiler to find them.
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_LIB_SUBDIR = musl
+else
+SWIFT_LIB_SUBDIR = linux
+endif
+
 ################################################################################
 # inner-swift-package -- defines how the configuration, compilation and
 # installation of a Go package should be done, implements a few hooks to tune
@@ -93,9 +103,9 @@ define $(2)_INSTALL_STAGING_CMDS
 	# (.swiftmodule, .swiftdoc, ...) under a Modules/ subdirectory of the build
 	# dir; .swiftsourceinfo / .abi.json are optional and copied best-effort.
 	$$(foreach d,$$($(2)_LIBRARIES),\
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(STAGING_DIR)/usr/lib/swift/linux/ ; \
-		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
-		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(STAGING_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
+		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
 	)
 endef
 endif
@@ -126,9 +136,9 @@ define $(2)_INSTALL_CMDS
 	# (.swiftmodule, .swiftdoc, ...) under a Modules/ subdirectory of the build
 	# dir; .swiftsourceinfo / .abi.json are optional and copied best-effort.
 	$$(foreach d,$$($(2)_LIBRARIES),\
-		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(HOST_DIR)/usr/lib/swift/linux/ ; \
-		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
-		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(HOST_DIR)/usr/lib/swift/linux/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
+		cp -f $$($(2)_BUILDDIR)/lib$$(d).so $(HOST_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftmodule $$($(2)_BUILDDIR)/Modules/$$(d).swiftdoc $(HOST_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ ; \
+		cp -f $$($(2)_BUILDDIR)/Modules/$$(d).swiftsourceinfo $$($(2)_BUILDDIR)/Modules/$$(d).abi.json $(HOST_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(call qstrip,$(BR2_PACKAGE_SWIFT_TARGET_ARCH))/ 2>/dev/null || : ; \
 	)
 endef
 endif
