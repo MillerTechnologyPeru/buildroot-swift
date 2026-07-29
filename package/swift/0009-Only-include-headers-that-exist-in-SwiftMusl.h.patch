@@ -1,0 +1,543 @@
+Only include headers that exist in SwiftMusl.h
+
+SwiftMusl.h includes its 175 libc headers unconditionally, but it was
+written against the modularized sysroot of the Swift static SDK, which
+carries headers a stock musl installation does not provide, e.g.:
+
+  SwiftMusl.h:187:10: error: 'fts.h' file not found
+
+Guard every include with __has_include, exactly as SwiftGlibc.h.gyb
+already does for the glibc umbrella header, so the module builds against
+any musl sysroot and simply omits the declarations it does not have.
+
+--- a/stdlib/public/Platform/SwiftMusl.h
++++ b/stdlib/public/Platform/SwiftMusl.h
+@@ -10,178 +10,528 @@
+ //
+ //===----------------------------------------------------------------------===//
+ 
++#if __has_include(<assert.h>)
+ #include <assert.h>
++#endif
++#if __has_include(<float.h>)
+ #include <float.h>
++#endif
++#if __has_include(<iso646.h>)
+ #include <iso646.h>
++#endif
++#if __has_include(<limits.h>)
+ #include <limits.h>
++#endif
++#if __has_include(<stdalign.h>)
+ #include <stdalign.h>
++#endif
++#if __has_include(<stdarg.h>)
+ #include <stdarg.h>
++#endif
++#if __has_include(<stdatomic.h>)
+ #include <stdatomic.h>
++#endif
++#if __has_include(<stdbool.h>)
+ #include <stdbool.h>
++#endif
++#if __has_include(<stddef.h>)
+ #include <stddef.h>
++#endif
++#if __has_include(<stdint.h>)
+ #include <stdint.h>
++#endif
++#if __has_include(<time.h>)
+ #include <time.h>
++#endif
++#if __has_include(<tgmath.h>)
+ #include <tgmath.h>
++#endif
++#if __has_include(<complex.h>)
+ #include <complex.h>
++#endif
++#if __has_include(<ctype.h>)
+ #include <ctype.h>
++#endif
++#if __has_include(<errno.h>)
+ #include <errno.h>
++#endif
++#if __has_include(<fenv.h>)
+ #include <fenv.h>
++#endif
++#if __has_include(<inttypes.h>)
+ #include <inttypes.h>
++#endif
++#if __has_include(<locale.h>)
+ #include <locale.h>
++#endif
++#if __has_include(<math.h>)
+ #include <math.h>
++#endif
++#if __has_include(<setjmp.h>)
+ #include <setjmp.h>
++#endif
++#if __has_include(<signal.h>)
+ #include <signal.h>
++#endif
++#if __has_include(<stdio.h>)
+ #include <stdio.h>
++#endif
++#if __has_include(<stdlib.h>)
+ #include <stdlib.h>
++#endif
++#if __has_include(<stdnoreturn.h>)
+ #include <stdnoreturn.h>
++#endif
++#if __has_include(<string.h>)
+ #include <string.h>
++#endif
++#if __has_include(<threads.h>)
+ #include <threads.h>
++#endif
++#if __has_include(<uchar.h>)
+ #include <uchar.h>
++#endif
++#if __has_include(<wchar.h>)
+ #include <wchar.h>
++#endif
++#if __has_include(<wctype.h>)
+ #include <wctype.h>
++#endif
++#if __has_include(<aio.h>)
+ #include <aio.h>
++#endif
++#if __has_include(<arpa/inet.h>)
+ #include <arpa/inet.h>
++#endif
++#if __has_include(<arpa/ftp.h>)
+ #include <arpa/ftp.h>
++#endif
++#if __has_include(<arpa/nameser.h>)
+ #include <arpa/nameser.h>
++#endif
++#if __has_include(<arpa/nameser_compat.h>)
+ #include <arpa/nameser_compat.h>
++#endif
++#if __has_include(<arpa/telnet.h>)
+ #include <arpa/telnet.h>
++#endif
++#if __has_include(<arpa/tftp.h>)
+ #include <arpa/tftp.h>
++#endif
++#if __has_include(<cpio.h>)
+ #include <cpio.h>
++#endif
++#if __has_include(<dirent.h>)
+ #include <dirent.h>
++#endif
++#if __has_include(<dlfcn.h>)
+ #include <dlfcn.h>
++#endif
++#if __has_include(<fcntl.h>)
+ #include <fcntl.h>
++#endif
++#if __has_include(<fmtmsg.h>)
+ #include <fmtmsg.h>
++#endif
++#if __has_include(<fnmatch.h>)
+ #include <fnmatch.h>
++#endif
++#if __has_include(<ftw.h>)
+ #include <ftw.h>
++#endif
++#if __has_include(<glob.h>)
+ #include <glob.h>
++#endif
++#if __has_include(<grp.h>)
+ #include <grp.h>
++#endif
++#if __has_include(<iconv.h>)
+ #include <iconv.h>
++#endif
++#if __has_include(<langinfo.h>)
+ #include <langinfo.h>
++#endif
++#if __has_include(<libgen.h>)
+ #include <libgen.h>
++#endif
++#if __has_include(<monetary.h>)
+ #include <monetary.h>
++#endif
++#if __has_include(<mqueue.h>)
+ #include <mqueue.h>
++#endif
++#if __has_include(<net/if.h>)
+ #include <net/if.h>
++#endif
++#if __has_include(<net/ethernet.h>)
+ #include <net/ethernet.h>
++#endif
++#if __has_include(<net/if_arp.h>)
+ #include <net/if_arp.h>
++#endif
++#if __has_include(<net/route.h>)
+ #include <net/route.h>
++#endif
++#if __has_include(<netdb.h>)
+ #include <netdb.h>
++#endif
++#if __has_include(<netinet/in.h>)
+ #include <netinet/in.h>
++#endif
++#if __has_include(<netinet/tcp.h>)
+ #include <netinet/tcp.h>
++#endif
++#if __has_include(<netinet/ether.h>)
+ #include <netinet/ether.h>
++#endif
++#if __has_include(<netinet/icmp6.h>)
+ #include <netinet/icmp6.h>
++#endif
++#if __has_include(<netinet/if_ether.h>)
+ #include <netinet/if_ether.h>
++#endif
++#if __has_include(<netinet/igmp.h>)
+ #include <netinet/igmp.h>
++#endif
++#if __has_include(<netinet/in_systm.h>)
+ #include <netinet/in_systm.h>
++#endif
++#if __has_include(<netinet/ip.h>)
+ #include <netinet/ip.h>
++#endif
++#if __has_include(<netinet/ip6.h>)
+ #include <netinet/ip6.h>
++#endif
++#if __has_include(<netinet/ip_icmp.h>)
+ #include <netinet/ip_icmp.h>
++#endif
++#if __has_include(<netinet/udp.h>)
+ #include <netinet/udp.h>
++#endif
++#if __has_include(<nl_types.h>)
+ #include <nl_types.h>
++#endif
++#if __has_include(<poll.h>)
+ #include <poll.h>
++#endif
++#if __has_include(<pthread.h>)
+ #include <pthread.h>
++#endif
++#if __has_include(<pwd.h>)
+ #include <pwd.h>
++#endif
++#if __has_include(<regex.h>)
+ #include <regex.h>
++#endif
++#if __has_include(<sched.h>)
+ #include <sched.h>
++#endif
++#if __has_include(<search.h>)
+ #include <search.h>
++#endif
++#if __has_include(<semaphore.h>)
+ #include <semaphore.h>
++#endif
++#if __has_include(<spawn.h>)
+ #include <spawn.h>
++#endif
++#if __has_include(<strings.h>)
+ #include <strings.h>
++#endif
++#if __has_include(<stropts.h>)
+ #include <stropts.h>
++#endif
++#if __has_include(<sys/ipc.h>)
+ #include <sys/ipc.h>
++#endif
++#if __has_include(<sys/mman.h>)
+ #include <sys/mman.h>
++#endif
++#if __has_include(<sys/msg.h>)
+ #include <sys/msg.h>
++#endif
++#if __has_include(<sys/resource.h>)
+ #include <sys/resource.h>
++#endif
++#if __has_include(<sys/select.h>)
+ #include <sys/select.h>
++#endif
++#if __has_include(<sys/sem.h>)
+ #include <sys/sem.h>
++#endif
++#if __has_include(<sys/shm.h>)
+ #include <sys/shm.h>
++#endif
++#if __has_include(<sys/socket.h>)
+ #include <sys/socket.h>
++#endif
++#if __has_include(<sys/stat.h>)
+ #include <sys/stat.h>
++#endif
++#if __has_include(<sys/statvfs.h>)
+ #include <sys/statvfs.h>
++#endif
++#if __has_include(<sys/time.h>)
+ #include <sys/time.h>
++#endif
++#if __has_include(<sys/times.h>)
+ #include <sys/times.h>
++#endif
++#if __has_include(<sys/types.h>)
+ #include <sys/types.h>
++#endif
++#if __has_include(<sys/uio.h>)
+ #include <sys/uio.h>
++#endif
++#if __has_include(<sys/un.h>)
+ #include <sys/un.h>
++#endif
++#if __has_include(<sys/utsname.h>)
+ #include <sys/utsname.h>
++#endif
++#if __has_include(<sys/wait.h>)
+ #include <sys/wait.h>
++#endif
++#if __has_include(<sys/acct.h>)
+ #include <sys/acct.h>
++#endif
++#if __has_include(<sys/auxv.h>)
+ #include <sys/auxv.h>
++#endif
++#if __has_include(<sys/cachectl.h>)
+ #include <sys/cachectl.h>
++#endif
++#if __has_include(<sys/dir.h>)
+ #include <sys/dir.h>
++#endif
++#if __has_include(<sys/epoll.h>)
+ #include <sys/epoll.h>
++#endif
++#if __has_include(<sys/eventfd.h>)
+ #include <sys/eventfd.h>
++#endif
++#if __has_include(<sys/fanotify.h>)
+ #include <sys/fanotify.h>
++#endif
++#if __has_include(<sys/file.h>)
+ #include <sys/file.h>
++#endif
++#if __has_include(<sys/fsuid.h>)
+ #include <sys/fsuid.h>
++#endif
++#if __has_include(<sys/inotify.h>)
+ #include <sys/inotify.h>
++#endif
++#if __has_include(<sys/ioctl.h>)
+ #include <sys/ioctl.h>
++#endif
++#if __has_include(<sys/io.h>)
+ #include <sys/io.h>
++#endif
++#if __has_include(<sys/klog.h>)
+ #include <sys/klog.h>
++#endif
++#if __has_include(<sys/membarrier.h>)
+ #include <sys/membarrier.h>
++#endif
++#if __has_include(<sys/mount.h>)
+ #include <sys/mount.h>
++#endif
++#if __has_include(<sys/mtio.h>)
+ #include <sys/mtio.h>
++#endif
++#if __has_include(<sys/param.h>)
+ #include <sys/param.h>
++#endif
++#if __has_include(<sys/personality.h>)
+ #include <sys/personality.h>
++#endif
++#if __has_include(<sys/prctl.h>)
+ #include <sys/prctl.h>
++#endif
++#if __has_include(<sys/procfs.h>)
+ #include <sys/procfs.h>
++#endif
++#if __has_include(<sys/ptrace.h>)
+ #include <sys/ptrace.h>
++#endif
++#if __has_include(<sys/quota.h>)
+ #include <sys/quota.h>
++#endif
++#if __has_include(<sys/random.h>)
+ #include <sys/random.h>
++#endif
++#if __has_include(<sys/reboot.h>)
+ #include <sys/reboot.h>
++#endif
++#if __has_include(<sys/reg.h>)
+ #include <sys/reg.h>
++#endif
++#if __has_include(<sys/sendfile.h>)
+ #include <sys/sendfile.h>
++#endif
++#if __has_include(<sys/signalfd.h>)
+ #include <sys/signalfd.h>
++#endif
++#if __has_include(<sys/statfs.h>)
+ #include <sys/statfs.h>
++#endif
++#if __has_include(<sys/stropts.h>)
+ #include <sys/stropts.h>
++#endif
++#if __has_include(<sys/swap.h>)
+ #include <sys/swap.h>
++#endif
++#if __has_include(<sys/syscall.h>)
+ #include <sys/syscall.h>
++#endif
++#if __has_include(<sys/sysinfo.h>)
+ #include <sys/sysinfo.h>
++#endif
++#if __has_include(<sys/syslog.h>)
+ #include <sys/syslog.h>
++#endif
++#if __has_include(<sys/sysmacros.h>)
+ #include <sys/sysmacros.h>
++#endif
++#if __has_include(<sys/timeb.h>)
+ #include <sys/timeb.h>
++#endif
++#if __has_include(<sys/timerfd.h>)
+ #include <sys/timerfd.h>
++#endif
++#if __has_include(<sys/timex.h>)
+ #include <sys/timex.h>
++#endif
++#if __has_include(<sys/ttydefaults.h>)
+ #include <sys/ttydefaults.h>
++#endif
++#if __has_include(<sys/ucontext.h>)
+ #include <sys/ucontext.h>
++#endif
++#if __has_include(<sys/user.h>)
+ #include <sys/user.h>
++#endif
++#if __has_include(<sys/vfs.h>)
+ #include <sys/vfs.h>
++#endif
++#if __has_include(<sys/xattr.h>)
+ #include <sys/xattr.h>
++#endif
++#if __has_include(<syslog.h>)
+ #include <syslog.h>
++#endif
++#if __has_include(<tar.h>)
+ #include <tar.h>
++#endif
++#if __has_include(<termios.h>)
+ #include <termios.h>
++#endif
++#if __has_include(<ucontext.h>)
+ #include <ucontext.h>
++#endif
++#if __has_include(<unistd.h>)
+ #include <unistd.h>
++#endif
++#if __has_include(<ulimit.h>)
+ #include <ulimit.h>
++#endif
++#if __has_include(<utime.h>)
+ #include <utime.h>
++#endif
++#if __has_include(<utmpx.h>)
+ #include <utmpx.h>
++#endif
++#if __has_include(<alloca.h>)
+ #include <alloca.h>
++#endif
++#if __has_include(<ar.h>)
+ #include <ar.h>
++#endif
++#if __has_include(<byteswap.h>)
+ #include <byteswap.h>
++#endif
++#if __has_include(<crypt.h>)
+ #include <crypt.h>
++#endif
++#if __has_include(<elf.h>)
+ #include <elf.h>
++#endif
++#if __has_include(<endian.h>)
+ #include <endian.h>
++#endif
++#if __has_include(<err.h>)
+ #include <err.h>
++#endif
++#if __has_include(<getopt.h>)
+ #include <getopt.h>
++#endif
++#if __has_include(<ifaddrs.h>)
+ #include <ifaddrs.h>
++#endif
++#if __has_include(<lastlog.h>)
+ #include <lastlog.h>
++#endif
++#if __has_include(<libintl.h>)
+ #include <libintl.h>
++#endif
++#if __has_include(<link.h>)
+ #include <link.h>
++#endif
++#if __has_include(<malloc.h>)
+ #include <malloc.h>
++#endif
++#if __has_include(<memory.h>)
+ #include <memory.h>
++#endif
++#if __has_include(<mntent.h>)
+ #include <mntent.h>
++#endif
++#if __has_include(<netpacket/packet.h>)
+ #include <netpacket/packet.h>
++#endif
++#if __has_include(<paths.h>)
+ #include <paths.h>
++#endif
++#if __has_include(<pty.h>)
+ #include <pty.h>
++#endif
++#if __has_include(<resolv.h>)
+ #include <resolv.h>
++#endif
++#if __has_include(<scsi/scsi.h>)
+ #include <scsi/scsi.h>
++#endif
++#if __has_include(<scsi/scsi_ioctl.h>)
+ #include <scsi/scsi_ioctl.h>
++#endif
++#if __has_include(<scsi/sg.h>)
+ #include <scsi/sg.h>
++#endif
++#if __has_include(<shadow.h>)
+ #include <shadow.h>
++#endif
++#if __has_include(<stdio_ext.h>)
+ #include <stdio_ext.h>
++#endif
++#if __has_include(<syscall.h>)
+ #include <syscall.h>
++#endif
++#if __has_include(<sysexits.h>)
+ #include <sysexits.h>
++#endif
++#if __has_include(<utmp.h>)
+ #include <utmp.h>
++#endif
++#if __has_include(<values.h>)
+ #include <values.h>
++#endif
++#if __has_include(<unwind.h>)
+ #include <unwind.h>
++#endif
++#if __has_include(<wordexp.h>)
+ #include <wordexp.h>
++#endif
++#if __has_include(<fts.h>)
+ #include <fts.h>
++#endif
