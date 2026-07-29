@@ -1,0 +1,30 @@
+Allow overriding the Unix SDK library subdirectory
+
+The compiler locates the runtime libraries and the libc module map under
+a platform directory derived from the target triple
+(getPlatformNameForTriple): for *-unknown-linux-musl that is "musl", but
+the LINUX SDK always installs under "linux", so a musl-targeted build of
+the standard library cannot find its own SwiftMusl module:
+
+  error: no such module 'SwiftMusl'
+
+Let the builder override the subdirectory so the install layout matches
+what the compiler will search. Builds that do not pass the override are
+unchanged.
+
+--- a/cmake/modules/SwiftConfigureSDK.cmake
++++ b/cmake/modules/SwiftConfigureSDK.cmake
+@@ -303,6 +303,13 @@
+ 
+   set(SWIFT_SDK_${prefix}_NAME "${name}")
+   set(SWIFT_SDK_${prefix}_LIB_SUBDIR "${platform}")
++  # The compiler locates the runtime and the libc module map under the
++  # platform directory it derives from the target triple
++  # (getPlatformNameForTriple), which is "musl" -- not "linux" -- for
++  # *-unknown-linux-musl. Let the builder align the install layout with it.
++  if(SWIFT_SDK_${prefix}_LIB_SUBDIR_OVERRIDE)
++    set(SWIFT_SDK_${prefix}_LIB_SUBDIR "${SWIFT_SDK_${prefix}_LIB_SUBDIR_OVERRIDE}")
++  endif()
+   set(SWIFT_SDK_${prefix}_ARCHITECTURES "${architectures}")
+   if("${prefix}" STREQUAL "CYGWIN")
+     set(SWIFT_SDK_${prefix}_OBJECT_FORMAT "COFF")
