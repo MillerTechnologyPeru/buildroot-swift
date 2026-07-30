@@ -45,6 +45,16 @@ else
 SWIFT_LIBRT = $(STAGING_DIR)/usr/lib/librt.a
 endif
 
+# fts(3) is not part of musl. Consumers that need it (CoreFoundation) link the
+# musl-fts package, which glibc builds do not need since fts lives in libc.
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_FTS_DEPENDENCIES = musl-fts
+SWIFT_FTS_LIBS = -lfts
+else
+SWIFT_FTS_DEPENDENCIES =
+SWIFT_FTS_LIBS =
+endif
+
 ################################################################################
 # inner-swift-package -- defines how the configuration, compilation and
 # installation of a Go package should be done, implements a few hooks to tune
