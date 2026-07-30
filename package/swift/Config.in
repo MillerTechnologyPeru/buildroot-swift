@@ -39,6 +39,9 @@ config BR2_PACKAGE_SWIFT
 	select BR2_PACKAGE_LIBBSD
 	select BR2_PACKAGE_LIBXML2
 	select BR2_PACKAGE_ZSTD
+	# fts(3) is absent from musl; the SwiftMusl module and CoreFoundation
+	# both expect <fts.h>
+	select BR2_PACKAGE_MUSL_FTS if BR2_TOOLCHAIN_USES_MUSL
 	help
 	  Swift is a general-purpose programming language built using a modern approach to safety, performance, and software design patterns.
 
