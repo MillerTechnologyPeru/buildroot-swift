@@ -8,7 +8,7 @@ SWIFT_INSTALL_STAGING = YES
 SWIFT_INSTALL_TARGET = YES
 SWIFT_SUPPORTS_IN_SOURCE_BUILD = NO
 SWIFT_BUILDDIR = $(SWIFT_SRCDIR)/build
-SWIFT_DEPENDENCIES = host-swift host-cmake host-ninja icu libxml2 libbsd libedit zstd
+SWIFT_DEPENDENCIES = host-swift host-cmake host-ninja icu libxml2 libbsd libedit zstd $(SWIFT_FTS_DEPENDENCIES)
 
 HOST_SWIFT_BUILDDIR = $(HOST_SWIFT_SRCDIR)/build
 SWIFT_NATIVE_PATH = $(HOST_SWIFT_BUILDDIR)/usr/bin
@@ -20,23 +20,32 @@ ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
 endif
 
+# SWIFT_LIBC_NAME is the libc component of the target triple. It mirrors
+# buildroot's own $(LIBC) (see package/Makefile.in) so the triple we hand to
+# swiftc/clang matches the sysroot buildroot actually produced.
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_LIBC_NAME = musl
+else
+SWIFT_LIBC_NAME = gnu
+endif
+
 # SWIFT_GCC_ALIAS_TRIPLE is the standard multiarch triple Clang recognises when
 # scanning the sysroot for a GCC install (see SWIFT_INSTALL_STAGING_CMDS). It
 # differs from $(GNU_TARGET_NAME), whose "swift" vendor Clang does not accept,
 # and from $(SWIFT_TARGET_NAME), which for ARM keeps the armvN sub-arch while
 # Clang normalises it to plain "arm".
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
-SWIFT_TARGET_NAME		= armv7-unknown-linux-gnueabihf
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
+SWIFT_TARGET_NAME		= armv7-unknown-linux-$(SWIFT_LIBC_NAME)eabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv6)
-SWIFT_TARGET_NAME		= armv6-unknown-linux-gnueabihf
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabihf
+SWIFT_TARGET_NAME		= armv6-unknown-linux-$(SWIFT_LIBC_NAME)eabihf
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabihf
 else ifeq ($(SWIFT_TARGET_ARCH),armv5)
-SWIFT_TARGET_NAME		= armv5-unknown-linux-gnueabi
-SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-gnueabi
+SWIFT_TARGET_NAME		= armv5-unknown-linux-$(SWIFT_LIBC_NAME)eabi
+SWIFT_GCC_ALIAS_TRIPLE	= arm-linux-$(SWIFT_LIBC_NAME)eabi
 else
-SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-gnu
-SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-gnu
+SWIFT_TARGET_NAME		= $(SWIFT_TARGET_ARCH)-unknown-linux-$(SWIFT_LIBC_NAME)
+SWIFT_GCC_ALIAS_TRIPLE	= $(SWIFT_TARGET_ARCH)-linux-$(SWIFT_LIBC_NAME)
 endif
 
 # The Debian multiarch tuple, which Clang uses to locate the arch-specific C++
@@ -46,7 +55,7 @@ endif
 # ("clang -print-multiarch").
 SWIFT_GCC_MULTIARCH_TRIPLE = $(SWIFT_GCC_ALIAS_TRIPLE)
 ifeq ($(SWIFT_TARGET_ARCH),i686)
-SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-gnu
+SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-$(SWIFT_LIBC_NAME)
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -136,8 +145,9 @@ $(SWIFTC_EXTRA_FLAGS) \
 -L${STAGING_DIR}/lib \
 -L${STAGING_DIR}/usr/lib \
 -L${STAGING_DIR}/usr/lib/swift \
--L${STAGING_DIR}/usr/lib/swift/linux \
+-L${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR) \
 -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
+$(SWIFT_FTS_LIBS) \
 -sdk ${STAGING_DIR} \
 "
 
@@ -167,6 +177,8 @@ SWIFT_CONF_OPTS = \
     -DSWIFT_HOST_VARIANT_ARCH=${SWIFT_TARGET_ARCH} \
     -DSWIFT_SDKS=LINUX \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_PATH=${STAGING_DIR}  \
+    -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_TRIPLE=$(SWIFT_TARGET_NAME) \
+    -DSWIFT_SDK_LINUX_LIB_SUBDIR_OVERRIDE=$(SWIFT_LIB_SUBDIR) \
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${LIBDISPATCH_SRCDIR} \
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
 	-DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
@@ -185,11 +197,23 @@ SWIFT_CONF_OPTS = \
 	-DSWIFT_INCLUDE_TEST_BINARIES=OFF \
     -DSWIFT_BUILD_TEST_SUPPORT_MODULES=OFF \
 	-DZLIB_LIBRARY=$(STAGING_DIR)/usr/lib/libz.so \
+	-DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=FALSE \
+	-DSWIFT_STDLIB_BUILD_PRIVATE=FALSE \
 
 # The overridable retain/release fast path uses indirect musttail calls,
 # which clang cannot generate on these targets
 ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mipsel mips64el),)
 SWIFT_CONF_OPTS += -DSWIFT_STDLIB_OVERRIDABLE_RETAIN_RELEASE=FALSE
+endif
+
+# The CMake build below invokes the native clang/clang++ from host-swift
+# directly (see SWIFT_CONFIGURE_CMDS), bypassing buildroot's toolchain
+# wrapper, so BR2_CCACHE's automatic HOSTCC/TARGET_CC wrapping never sees it.
+# Wire the compiler launcher in explicitly when BR2_CCACHE is enabled.
+ifeq ($(BR2_CCACHE),y)
+SWIFT_CONF_OPTS += \
+	-DCMAKE_C_COMPILER_LAUNCHER=$(CCACHE) \
+	-DCMAKE_CXX_COMPILER_LAUNCHER=$(CCACHE)
 endif
 
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
@@ -237,6 +261,19 @@ SWIFT_CONF_OPTS	+= \
 else
 endif
 
+# The stdlib build compiles libdispatch from the clone in the host-swift tree,
+# which buildroot's patch infrastructure never touches. Apply the same fix as
+# package/libswiftdispatch/0001-Run-configure-checks-with-_GNU_SOURCE-on-musl.patch:
+# musl does not define __GNU_LIBRARY__, so libdispatch's configure checks run
+# without -D_GNU_SOURCE and miss program_invocation_short_name, tripping the
+# #error in shims/getprogname.h. The sed is a no-op once applied (and on trees
+# already carrying the fix), so it is safe to run on every configure.
+define SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
+	$(SED) 's/check_symbol_exists(__GNU_LIBRARY__ "features.h" _GNU_SOURCE)/set(_GNU_SOURCE 1)/' \
+		$(LIBDISPATCH_SRCDIR)/CMakeLists.txt
+endef
+SWIFT_PRE_CONFIGURE_HOOKS += SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
+
 define SWIFT_CONFIGURE_CMDS
 	# Configure for Ninja
 	(mkdir -p $(SWIFT_BUILDDIR) && \
@@ -257,7 +294,7 @@ define SWIFT_BUILD_CMDS
 endef
 
 define SWIFT_INSTALL_TARGET_CMDS
-	cp -f $(SWIFT_BUILDDIR)/lib/swift/linux/*.so $(TARGET_DIR)/usr/lib
+	cp -f $(SWIFT_BUILDDIR)/lib/swift/$(SWIFT_LIB_SUBDIR)/*.so $(TARGET_DIR)/usr/lib
 endef
 
 define SWIFT_INSTALL_STAGING_CMDS
@@ -339,12 +376,12 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-target", "$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-use-ld=lld",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-tools-directory", "$(SWIFT_NATIVE_PATH)",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-rpath", "-Xlinker", "/usr/lib/swift/linux",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-rpath", "-Xlinker", "/usr/lib/swift/$(SWIFT_LIB_SUBDIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)/lib",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/linux",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-Xlinker", "-L$(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "-L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-Xlinker", "--build-id=sha1",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-I$(STAGING_DIR)/usr/include",' >> $(SWIFT_DESTINATION_FILE)
@@ -371,6 +408,11 @@ define HOST_SWIFT_INSTALL_CMDS
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
 		echo '      "-Xcc", "-mabi=$(BR2_GCC_TARGET_ABI)",' >> $(SWIFT_DESTINATION_FILE);\
+    fi
+
+	# Foundation calls fts(3), which lives in musl-fts rather than musl itself
+	@if [ "$(BR2_TOOLCHAIN_USES_MUSL)" = "y" ]; then\
+		echo '      "-lfts",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
 	echo '      "-sdk", "$(STAGING_DIR)"' >> $(SWIFT_DESTINATION_FILE)

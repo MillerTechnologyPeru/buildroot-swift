@@ -1,0 +1,65 @@
+Build the Musl overlay for musl LINUX SDK targets
+
+The compiler's ClangImporter resolves the C library for *-linux-musl
+triples through musl.modulemap/SwiftMusl, never glibc.modulemap, so for
+a LINUX SDK configured with a musl triple the Glibc overlay fails with
+"no such module 'SwiftGlibc'" and the Musl overlay -- which the stdlib
+sources already support via canImport(SwiftMusl) -- is never built.
+
+Select the overlay from the configured triple: drop LINUX from the
+Glibc overlay's SDKs and add it to the Musl overlay's (including the
+musl.modulemap/SwiftMusl.h resource install) when the triple names a
+musl environment, and skip generating and installing the glibc
+modulemap for such a target, since nothing builds against it and the
+install would fail on the missing file. Configurations with the default
+gnu triples are unchanged.
+
+--- a/stdlib/public/Platform/CMakeLists.txt
++++ b/stdlib/public/Platform/CMakeLists.txt
+@@ -13,6 +13,15 @@
+ if(SWIFT_FREESTANDING_FLAVOR STREQUAL "linux")
+   set(swiftGlibc_target_sdks CYGWIN FREEBSD OPENBSD LINUX HAIKU FREESTANDING)
+ endif()
++
++# When the LINUX SDK targets a musl environment, the compiler's ClangImporter
++# resolves the libc through musl.modulemap/SwiftMusl, so build the Musl
++# overlay for LINUX instead of the Glibc one.
++set(swiftMusl_target_sdks LINUX_STATIC)
++if(SWIFT_SDK_LINUX_ARCH_${SWIFT_HOST_VARIANT_ARCH}_TRIPLE MATCHES "musl")
++  list(REMOVE_ITEM swiftGlibc_target_sdks LINUX)
++  list(APPEND swiftMusl_target_sdks LINUX)
++endif()
+ add_swift_target_library(swiftGlibc ${SWIFT_STDLIB_LIBRARY_BUILD_TYPES} IS_SDK_OVERLAY
+     ${swift_platform_sources}
+     POSIXError.swift
+@@ -43,7 +52,7 @@
+       ${SWIFT_STANDARD_LIBRARY_SWIFT_FLAGS}
+       ${swift_platform_compile_flags}
+     LINK_FLAGS "${SWIFT_RUNTIME_SWIFT_LINK_FLAGS}"
+-    TARGET_SDKS LINUX_STATIC
++    TARGET_SDKS ${swiftMusl_target_sdks}
+     INSTALL_IN_COMPONENT sdk-overlay
+     DEPENDS musl_modulemap)
+ 
+@@ -83,7 +92,7 @@
+ 
+ foreach(sdk ${SWIFT_SDKS})
+   # Add more platforms supporting Musl to these checks,
+-  if(NOT "${sdk}" STREQUAL "LINUX_STATIC")
++  if(NOT "${sdk}" IN_LIST swiftMusl_target_sdks)
+     continue()
+   endif()
+ 
+@@ -197,6 +206,12 @@
+     continue()
+   endif()
+ 
++  # A musl LINUX SDK builds the Musl overlay in place of the Glibc one, so it
++  # has no glibc modulemap to generate or install.
++  if("${sdk}" STREQUAL "LINUX" AND NOT "LINUX" IN_LIST swiftGlibc_target_sdks)
++    continue()
++  endif()
++
+   foreach(arch ${SWIFT_SDK_${sdk}_ARCHITECTURES})
+     set(arch_subdir "${SWIFT_SDK_${sdk}_LIB_SUBDIR}/${arch}")
+     set(module_dir "${SWIFTLIB_DIR}/${arch_subdir}")

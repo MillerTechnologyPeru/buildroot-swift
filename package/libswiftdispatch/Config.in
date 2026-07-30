@@ -2,7 +2,7 @@ config BR2_PACKAGE_LIBSWIFTDISPATCH
 	bool "libswiftdispatch"
 	depends on BR2_TOOLCHAIN_HAS_THREADS
 	depends on !BR2_STATIC_LIBS
-	depends on BR2_TOOLCHAIN_USES_GLIBC
+	depends on BR2_TOOLCHAIN_USES_GLIBC || BR2_TOOLCHAIN_USES_MUSL
 	depends on BR2_PACKAGE_LIBBSD
 	depends on BR2_PACKAGE_SWIFT
 	

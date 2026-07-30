@@ -33,18 +33,21 @@ config BR2_PACKAGE_SWIFT
 	depends on BR2_PACKAGE_SWIFT_ARCH_SUPPORTS
 	depends on BR2_TOOLCHAIN_HAS_THREADS
 	depends on !BR2_STATIC_LIBS
-	depends on BR2_TOOLCHAIN_USES_GLIBC
+	depends on BR2_TOOLCHAIN_USES_GLIBC || BR2_TOOLCHAIN_USES_MUSL
 	select BR2_PACKAGE_ICU
 	select BR2_PACKAGE_LIBEDIT
 	select BR2_PACKAGE_LIBBSD
 	select BR2_PACKAGE_LIBXML2
 	select BR2_PACKAGE_ZSTD
+	# fts(3) is absent from musl; the SwiftMusl module and CoreFoundation
+	# both expect <fts.h>
+	select BR2_PACKAGE_MUSL_FTS if BR2_TOOLCHAIN_USES_MUSL
 	help
 	  Swift is a general-purpose programming language built using a modern approach to safety, performance, and software design patterns.
 
 	  http://swift.org
 
-comment "swift needs a toolchain w/ Glibc, ICU, wchar, threads, C++, dynamic library"
+comment "swift needs a toolchain w/ Glibc or musl, ICU, wchar, threads, C++, dynamic library"
 	depends on BR2_PACKAGE_SWIFT_ARCH_SUPPORTS
-	depends on !BR2_TOOLCHAIN_USES_GLIBC || !BR2_TOOLCHAIN_HAS_THREADS || !BR2_INSTALL_LIBSTDCPP \
-		|| BR2_STATIC_LIBS || !BR2_USE_WCHAR
+	depends on (!BR2_TOOLCHAIN_USES_GLIBC && !BR2_TOOLCHAIN_USES_MUSL) || !BR2_TOOLCHAIN_HAS_THREADS \
+		|| !BR2_INSTALL_LIBSTDCPP || BR2_STATIC_LIBS || !BR2_USE_WCHAR

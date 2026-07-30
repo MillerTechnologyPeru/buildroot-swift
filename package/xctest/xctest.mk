@@ -55,9 +55,9 @@ endef
 
 define XCTEST_INSTALL_STAGING_CMDS
 	# Copy libraries
-	cp $(XCTEST_BUILDDIR)/*.so $(STAGING_DIR)/usr/lib/swift/linux/
+	cp $(XCTEST_BUILDDIR)/*.so $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/
 	# Copy Swift modules
-	cp $(XCTEST_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/
+	cp $(XCTEST_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/
 	# Restore Dispatch headers
 	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)
 endef

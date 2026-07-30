@@ -6,7 +6,7 @@ SWIFT_FOUNDATION_LICENSE_FILES = LICENSE
 SWIFT_FOUNDATION_INSTALL_STAGING = YES
 SWIFT_FOUNDATION_INSTALL_TARGET = YES
 SWIFT_FOUNDATION_SUPPORTS_IN_SOURCE_BUILD = NO
-SWIFT_FOUNDATION_DEPENDENCIES = icu libxml2 libcurl swift libswiftdispatch
+SWIFT_FOUNDATION_DEPENDENCIES = icu libxml2 libcurl swift libswiftdispatch $(SWIFT_FTS_DEPENDENCIES)
 
 SWIFT_FOUNDATION_CONF_OPTS += \
     -DCMAKE_Swift_FLAGS=${SWIFTC_FLAGS} \
@@ -19,7 +19,7 @@ SWIFT_FOUNDATION_CONF_OPTS += \
     -DCURL_INCLUDE_DIR="${STAGING_DIR}/usr/include" \
 	-DLIBXML2_LIBRARY=${STAGING_DIR}/usr/lib/libxml2.so \
     -DLIBXML2_INCLUDE_DIR=${STAGING_DIR}/usr/include/libxml2 \
-	-DLibRT_LIBRARIES=${STAGING_DIR}/usr/lib/librt.a \
+	-DLibRT_LIBRARIES=$(SWIFT_LIBRT) \
 	-DSwiftFoundation_MODULE_TRIPLE=${SWIFT_TARGET_NAME} \
 	-DSwiftFoundation_MACRO=${SWIFT_NATIVE_PATH}/../lib/swift/host/plugins \
 	-D_SwiftFoundation_SourceDIR=$(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation \
@@ -29,6 +29,29 @@ ifeq (SWIFT_FOUNDATION_SUPPORTS_IN_SOURCE_BUILD),YES)
 SWIFT_FOUNDATION_BUILDDIR			= $(SWIFT_FOUNDATION_SRCDIR)
 else
 SWIFT_FOUNDATION_BUILDDIR			= $(SWIFT_FOUNDATION_SRCDIR)/build
+endif
+
+# The Swift sources come from the swift-foundation clone in the host-swift tree,
+# which buildroot's patch infrastructure never touches.
+#
+# FileOperations+Enumeration.swift reads FTSENT members, and clang attributes
+# those declarations to _FoundationCShims, whose filemanager_shims.h includes
+# <fts.h>. Swift's MemberImportVisibility rule then requires that module to be
+# imported explicitly: the Glibc, Android and WASI branches all do so, the Musl
+# branch does not, so the file fails to compile against musl with "property
+# 'fts_path' is not available due to missing import of defining module". Insert
+# the missing import, skipping files that already have it.
+SWIFT_FOUNDATION_ENUMERATION_SRC = $(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation/Sources/FoundationEssentials/FileManager/FileOperations+Enumeration.swift
+
+define SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
+	awk 'prev == "@preconcurrency import Musl" && $$0 != "internal import _FoundationCShims" \
+		{ print "internal import _FoundationCShims" } { print; prev = $$0 }' \
+		$(SWIFT_FOUNDATION_ENUMERATION_SRC) > $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp
+	mv $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp $(SWIFT_FOUNDATION_ENUMERATION_SRC)
+endef
+
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_FOUNDATION_PRE_CONFIGURE_HOOKS += SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
 endif
 
 define SWIFT_FOUNDATION_CONFIGURE_CMDS
@@ -48,7 +71,7 @@ define SWIFT_FOUNDATION_CONFIGURE_CMDS
 		-DCMAKE_BUILD_TYPE=$(if $(BR2_ENABLE_RUNTIME_DEBUG),Debug,Release) \
     	-DCMAKE_C_COMPILER=$(SWIFT_NATIVE_PATH)/clang \
     	-DCMAKE_C_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))" \
-    	-DCMAKE_C_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR)" \
+    	-DCMAKE_C_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_FTS_LIBS)" \
 		-DCMAKE_CXX_COMPILER=$(SWIFT_NATIVE_PATH)/clang++ \
     	-DCMAKE_CXX_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot $(STAGING_DIR) -latomic $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(STAGING_DIR)/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/ -I$(HOST_DIR)/$(GNU_TARGET_NAME)/include/c++/$(call qstrip,$(BR2_GCC_VERSION))/$(GNU_TARGET_NAME)" \
     	-DCMAKE_CXX_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR)" \
@@ -68,14 +91,14 @@ endef
 
 define SWIFT_FOUNDATION_INSTALL_STAGING_CMDS
 	# Copy libraries
-	cp $(SWIFT_FOUNDATION_BUILDDIR)/lib/*.so $(STAGING_DIR)/usr/lib/swift/linux/
+	cp $(SWIFT_FOUNDATION_BUILDDIR)/lib/*.so $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/
 	# Copy CoreFoundation module
 	mkdir -p ${STAGING_DIR}/usr/lib/swift/CoreFoundation
 	cp $(SWIFT_FOUNDATION_SRCDIR)/Sources/CoreFoundation/include/*.h ${STAGING_DIR}/usr/lib/swift/CoreFoundation/ 
 	touch ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	echo 'framework module CoreFoundation [extern_c] [system] { umbrella header "${STAGING_DIR}/usr/lib/swift/CoreFoundation/CoreFoundation.h" }' > ${STAGING_DIR}/usr/lib/swift/CoreFoundation/module.map
 	# Copy Swift modules
-	cp $(SWIFT_FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/
+	cp $(SWIFT_FOUNDATION_BUILDDIR)/swift/*  ${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/
 	cp -rf $(SWIFT_FOUNDATION_BUILDDIR)/_CModulesForClients/*  ${STAGING_DIR}/usr/lib/swift/
 	# Restore Dispatch headers
 	$(LIBSWIFTDISPATCH_INSTALL_STAGING_CMDS)

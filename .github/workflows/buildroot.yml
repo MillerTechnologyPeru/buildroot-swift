@@ -6,7 +6,7 @@ jobs:
         strategy:
           fail-fast: false
           matrix:
-            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "i386", "ppc64le"]
+            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "x86_64_musl", "i386", "ppc64le"]
         runs-on: ubuntu-latest
         container: colemancda/buildroot-swift:swift_${{ matrix.arch }}_defconfig
         steps:
@@ -33,3 +33,4 @@ jobs:
           with:
             name: swift-hello-${{ matrix.arch }}
             path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/target/usr/bin/swift-hello
+

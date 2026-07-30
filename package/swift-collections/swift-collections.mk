@@ -41,8 +41,8 @@ endef
 
 # See swift-system.mk for why we hand-copy instead of `ninja install`.
 define SWIFT_COLLECTIONS_INSTALL_STAGING_CMDS
-	find $(SWIFT_COLLECTIONS_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_COLLECTIONS_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	find $(SWIFT_COLLECTIONS_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_COLLECTIONS_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/ \;
 endef
 
 define SWIFT_COLLECTIONS_INSTALL_TARGET_CMDS

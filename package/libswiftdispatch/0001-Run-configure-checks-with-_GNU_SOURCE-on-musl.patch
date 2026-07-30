@@ -1,0 +1,27 @@
+Run configure checks with _GNU_SOURCE on musl
+
+The configure checks only add -D_GNU_SOURCE when features.h defines
+__GNU_LIBRARY__, which musl deliberately does not. Without it the
+program_invocation_short_name probe fails (musl declares it in errno.h
+only under _GNU_SOURCE, although the symbol is always present in libc),
+so HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME ends up 0 and the
+shims/getprogname.h fallback hits its #error on musl targets.
+
+The actual compilation always defines _GNU_SOURCE (src/internal.h), so
+defining it unconditionally for the checks matches what the code being
+configured will really see, on both glibc and musl.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -169,10 +169,7 @@
+ 
+ check_linker_flag(C "LINKER:--build-id=sha1" LINKER_SUPPORTS_BUILD_ID)
+ 
+-check_symbol_exists(__GNU_LIBRARY__ "features.h" _GNU_SOURCE)
+-if(_GNU_SOURCE)
+-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GNU_SOURCE)
+-endif()
++set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GNU_SOURCE)
+ 
+ check_c_source_compiles("void __attribute__((__noreturn__)) main() { __builtin_trap(); }"
+                         __BUILTIN_TRAP)

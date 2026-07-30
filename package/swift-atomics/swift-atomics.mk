@@ -45,9 +45,9 @@ endef
 
 # See swift-system.mk for why we hand-copy instead of `ninja install`.
 define SWIFT_ATOMICS_INSTALL_STAGING_CMDS
-	find $(SWIFT_ATOMICS_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_ATOMICS_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/ \;
-	find $(SWIFT_ATOMICS_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/linux/$(SWIFT_TARGET_ARCH)/ \;
+	find $(SWIFT_ATOMICS_BUILDDIR) -name '*.so' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_ATOMICS_BUILDDIR) -name '*.a' -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/ \;
+	find $(SWIFT_ATOMICS_BUILDDIR) \( -name '*.swiftmodule' -o -name '*.swiftdoc' -o -name '*.swiftsourceinfo' -o -name '*.abi.json' \) -type f -exec cp -f {} $(STAGING_DIR)/usr/lib/swift/$(SWIFT_LIB_SUBDIR)/$(SWIFT_TARGET_ARCH)/ \;
 	# Stage the _AtomicsShims clang module (headers + modulemap). Atomics is
 	# built without library evolution, so consumers transitively require every
 	# module it imports.
