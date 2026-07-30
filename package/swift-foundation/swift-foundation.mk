@@ -31,6 +31,29 @@ else
 SWIFT_FOUNDATION_BUILDDIR			= $(SWIFT_FOUNDATION_SRCDIR)/build
 endif
 
+# The Swift sources come from the swift-foundation clone in the host-swift tree,
+# which buildroot's patch infrastructure never touches.
+#
+# FileOperations+Enumeration.swift reads FTSENT members, and clang attributes
+# those declarations to _FoundationCShims, whose filemanager_shims.h includes
+# <fts.h>. Swift's MemberImportVisibility rule then requires that module to be
+# imported explicitly: the Glibc, Android and WASI branches all do so, the Musl
+# branch does not, so the file fails to compile against musl with "property
+# 'fts_path' is not available due to missing import of defining module". Insert
+# the missing import, skipping files that already have it.
+SWIFT_FOUNDATION_ENUMERATION_SRC = $(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation/Sources/FoundationEssentials/FileManager/FileOperations+Enumeration.swift
+
+define SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
+	awk 'prev == "@preconcurrency import Musl" && $$0 != "internal import _FoundationCShims" \
+		{ print "internal import _FoundationCShims" } { print; prev = $$0 }' \
+		$(SWIFT_FOUNDATION_ENUMERATION_SRC) > $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp
+	mv $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp $(SWIFT_FOUNDATION_ENUMERATION_SRC)
+endef
+
+ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
+SWIFT_FOUNDATION_PRE_CONFIGURE_HOOKS += SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
+endif
+
 define SWIFT_FOUNDATION_CONFIGURE_CMDS
 	# Workaround Dispatch defined with cmake and module
 	rm -rf ${STAGING_DIR}/usr/lib/swift/dispatch
