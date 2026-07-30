@@ -339,13 +339,25 @@ endef
 
 define HOST_SWIFT_BUILD_CMDS
 	# Build
+	#
+	# The symlink is chained onto the build with && rather than following it as
+	# a separate statement: the if-block reports the status of its last command,
+	# so with a ";" a failed build-script was discarded and the recipe
+	# succeeded. Buildroot then installed an incomplete toolchain and carried
+	# on, and the missing swiftc only surfaced hours later, when the target
+	# swift package configured against it and reported
+	#
+	#   CMAKE_Swift_COMPILER: .../host-swift-<ver>/build/usr/bin/swiftc
+	#   is not a full path to an existing compiler tool
+	#
+	# which says nothing about the build that actually failed.
 	@if [ ! -d "$(SWIFT_LLVM_DIR)" ]; then \
 		(cd $(HOST_SWIFT_SRCDIR)/swift-source \
 			&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
 			--preset=buildbot_linux,no_test \
 			install_destdir=$(HOST_SWIFT_BUILDDIR) \
-			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz); \
-		ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
+			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz) \
+		&& ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
 	fi
 endef
 
