@@ -147,6 +147,7 @@ $(SWIFTC_EXTRA_FLAGS) \
 -L${STAGING_DIR}/usr/lib/swift \
 -L${STAGING_DIR}/usr/lib/swift/$(SWIFT_LIB_SUBDIR) \
 -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) \
+$(SWIFT_FTS_LIBS) \
 -sdk ${STAGING_DIR} \
 "
 
@@ -407,6 +408,11 @@ define HOST_SWIFT_INSTALL_CMDS
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
 		echo '      "-Xcc", "-mabi=$(BR2_GCC_TARGET_ABI)",' >> $(SWIFT_DESTINATION_FILE);\
+    fi
+
+	# Foundation calls fts(3), which lives in musl-fts rather than musl itself
+	@if [ "$(BR2_TOOLCHAIN_USES_MUSL)" = "y" ]; then\
+		echo '      "-lfts",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
 	echo '      "-sdk", "$(STAGING_DIR)"' >> $(SWIFT_DESTINATION_FILE)
