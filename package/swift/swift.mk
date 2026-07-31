@@ -330,9 +330,24 @@ SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
 
 define HOST_SWIFT_CONFIGURE_CMDS
 	# Clone swift sources
+	#
+	# Clone at the release tag, not the default branch. update-checkout reads
+	# the pinned revision of every peer repository from the config file of the
+	# swift checkout it is run from, and applies --tag only to the repositories
+	# that actually carry it. Cloning main and then asking for a release tag
+	# therefore pins the swiftlang repositories to the release while leaving
+	# the third-party ones - wasi-libc, which has no Swift tags - wherever
+	# main points them, and a release build-script then drives sources it was
+	# never tested against. Concretely, main pins wasi-libc to wasi-sdk-31,
+	# whose build system is CMake only, while build-script still runs
+	# "make install" and stops with
+	#
+	#   make[1]: *** No rule to make target 'install'.  Stop.
+	#
+	# swift-6.3.3-RELEASE pins wasi-sdk-27, which still ships the Makefile.
 	@if [ ! -d "$(HOST_SWIFT_SRCDIR)/swift-source" ]; then \
 		mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source; \
-		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone https://github.com/swiftlang/swift.git; \
+		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone --branch swift-$(SWIFT_VERSION)-RELEASE https://github.com/swiftlang/swift.git; \
 		cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE; \
     fi
 endef
