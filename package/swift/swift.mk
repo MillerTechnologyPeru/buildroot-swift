@@ -330,10 +330,39 @@ SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
 
 define HOST_SWIFT_CONFIGURE_CMDS
 	# Clone swift sources
+	#
+	# Clone at the release tag rather than the default branch. update-checkout
+	# takes the pinned revision of every peer repository from the config of the
+	# swift checkout it runs from, so running main's copy pins fifty-odd
+	# repositories the way main wants them and leaves build-script driving
+	# sources from a different release. wasi-libc is where it surfaces: main
+	# pins wasi-sdk-31, whose build system is CMake only, while a release
+	# build-script still runs "make install" and stops with
+	#
+	#   make[1]: *** No rule to make target 'install'.  Stop.
+	#
+	# swift-6.3.3-RELEASE pins wasi-sdk-27, which still ships the Makefile.
+	#
+	# Chained with && into a temporary directory that is renamed only on
+	# success, because the guard below treats the presence of swift-source as
+	# "already checked out". With ";" a failed update-checkout was discarded
+	# and left a half-updated tree that every later run then skipped: one
+	# observed tree had swift at the release tag and thirty-eight peers still
+	# on a development snapshot, which built until swiftpm and stopped at
+	#
+	#   error: type 'SWBBuildServer' does not conform to protocol
+	#   'QueueBasedMessageHandler'
+	#
+	# an API mismatch between two repositories that were never meant to be
+	# built together. Failing the clone outright is recoverable; a tree that
+	# looks complete and is not costs a five-hour build to find out.
 	@if [ ! -d "$(HOST_SWIFT_SRCDIR)/swift-source" ]; then \
-		mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source; \
-		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone https://github.com/swiftlang/swift.git; \
-		cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE; \
+		rm -rf $(HOST_SWIFT_SRCDIR)/swift-source.tmp \
+		&& mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source.tmp \
+		&& cd $(HOST_SWIFT_SRCDIR)/swift-source.tmp \
+		&& git clone --branch swift-$(SWIFT_VERSION)-RELEASE https://github.com/swiftlang/swift.git \
+		&& ./swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE \
+		&& mv $(HOST_SWIFT_SRCDIR)/swift-source.tmp $(HOST_SWIFT_SRCDIR)/swift-source; \
     fi
 endef
 
