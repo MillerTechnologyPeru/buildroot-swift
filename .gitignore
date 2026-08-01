@@ -19,3 +19,4 @@ output
 host-swift-*
 .build
 .vscode
+__pycache__

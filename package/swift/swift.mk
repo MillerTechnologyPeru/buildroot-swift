@@ -13,8 +13,13 @@ SWIFT_DEPENDENCIES = host-swift host-cmake host-ninja icu libxml2 libbsd libedit
 HOST_SWIFT_BUILDDIR = $(HOST_SWIFT_SRCDIR)/build
 SWIFT_NATIVE_PATH = $(HOST_SWIFT_BUILDDIR)/usr/bin
 SWIFT_LLVM_DIR = $(HOST_SWIFT_BUILDDIR)/llvm
-SWIFT_STRING_PROCESSING_SRCDIR = $(HOST_SWIFT_SRCDIR)/swift-source/swift-experimental-string-processing
-LIBDISPATCH_SRCDIR = $(HOST_SWIFT_SRCDIR)/swift-source/swift-corelibs-libdispatch
+SWIFT_SOURCE_DIR = $(HOST_SWIFT_SRCDIR)/swift-source
+SWIFT_STRING_PROCESSING_SRCDIR = $(SWIFT_SOURCE_DIR)/swift-experimental-string-processing
+LIBDISPATCH_SRCDIR = $(SWIFT_SOURCE_DIR)/swift-corelibs-libdispatch
+
+ifndef SWIFT_SOURCE_REPOS
+$(error swift-sources.mk was not included before swift.mk)
+endif
 
 ifeq ($(BR2_TOOLCHAIN_HAS_LIBATOMIC),y)
 SWIFT_CONF_ENV += LIBS="-latomic"
@@ -261,19 +266,6 @@ SWIFT_CONF_OPTS	+= \
 else
 endif
 
-# The stdlib build compiles libdispatch from the clone in the host-swift tree,
-# which buildroot's patch infrastructure never touches. Apply the same fix as
-# package/libswiftdispatch/0001-Run-configure-checks-with-_GNU_SOURCE-on-musl.patch:
-# musl does not define __GNU_LIBRARY__, so libdispatch's configure checks run
-# without -D_GNU_SOURCE and miss program_invocation_short_name, tripping the
-# #error in shims/getprogname.h. The sed is a no-op once applied (and on trees
-# already carrying the fix), so it is safe to run on every configure.
-define SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
-	$(SED) 's/check_symbol_exists(__GNU_LIBRARY__ "features.h" _GNU_SOURCE)/set(_GNU_SOURCE 1)/' \
-		$(LIBDISPATCH_SRCDIR)/CMakeLists.txt
-endef
-SWIFT_PRE_CONFIGURE_HOOKS += SWIFT_LIBDISPATCH_GNU_SOURCE_FIXUP
-
 define SWIFT_CONFIGURE_CMDS
 	# Configure for Ninja
 	(mkdir -p $(SWIFT_BUILDDIR) && \
@@ -328,29 +320,55 @@ endef
 HOST_SWIFT_SUPPORT_DIR = $(HOST_DIR)/usr/share/swift
 SWIFT_DESTINATION_FILE = $(HOST_SWIFT_SUPPORT_DIR)/toolchain.json
 
-define HOST_SWIFT_CONFIGURE_CMDS
-	# Clone swift sources
-	#
-	# Clone at the release tag, not the default branch. update-checkout reads
-	# the pinned revision of every peer repository from the config file of the
-	# swift checkout it is run from, and applies --tag only to the repositories
-	# that actually carry it. Cloning main and then asking for a release tag
-	# therefore pins the swiftlang repositories to the release while leaving
-	# the third-party ones - wasi-libc, which has no Swift tags - wherever
-	# main points them, and a release build-script then drives sources it was
-	# never tested against. Concretely, main pins wasi-libc to wasi-sdk-31,
-	# whose build system is CMake only, while build-script still runs
-	# "make install" and stops with
-	#
-	#   make[1]: *** No rule to make target 'install'.  Stop.
-	#
-	# swift-6.3.3-RELEASE pins wasi-sdk-27, which still ships the Makefile.
-	@if [ ! -d "$(HOST_SWIFT_SRCDIR)/swift-source" ]; then \
-		mkdir -p $(HOST_SWIFT_SRCDIR)/swift-source; \
-		cd $(HOST_SWIFT_SRCDIR)/swift-source && git clone --branch swift-$(SWIFT_VERSION)-RELEASE https://github.com/swiftlang/swift.git; \
-		cd $(HOST_SWIFT_SRCDIR)/swift-source && $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/update-checkout --clone --tag swift-$(SWIFT_VERSION)-RELEASE; \
-    fi
+# swift's build-script builds the toolchain out of a "swift-source" directory
+# holding the swift sources next to every peer repository of the release, the
+# layout update-checkout produces. Rather than cloning them when the package
+# configures, fetch one GitHub archive per repository as an extra download, so
+# that buildroot downloads and hash-checks them along with everything else and
+# "make source" really does fetch everything the build needs. The revisions
+# live in swift-sources.mk; see utils/gen-swift-source-pins.py for where they
+# come from and how to regenerate them.
+HOST_SWIFT_EXTRA_DOWNLOADS = \
+	$(foreach repo,$(SWIFT_SOURCE_REPOS),$(call swift-repo-url,$(repo)))
+
+# Lay out swift-source from the archives. Extra downloads are only fetched,
+# never extracted, so unpack them here; buildroot has already checked them
+# against swift.hash by this point.
+#
+# swift-source/swift is a symlink back to the package's own sources rather
+# than a copy, so that the swift tree build-script compiles is the one
+# buildroot extracted and patched, and the patches in this directory keep
+# applying through the normal patch step.
+#
+# The per-repository test lets a tree that already carries a repository keep
+# it: the devcontainer images pre-populate swift-source with a prebuilt
+# toolchain, and that must not be clobbered.
+define HOST_SWIFT_EXTRACT_SWIFT_SOURCE
+	mkdir -p $(SWIFT_SOURCE_DIR)
+	$(foreach repo,$(SWIFT_SOURCE_REPOS), \
+		if [ ! -d $(SWIFT_SOURCE_DIR)/$(call swift-repo-dir,$(repo)) ]; then \
+			mkdir -p $(SWIFT_SOURCE_DIR)/$(call swift-repo-dir,$(repo)); \
+			$(call suitable-extractor,$(call swift-repo-file,$(repo))) \
+				$(HOST_SWIFT_DL_DIR)/$(call swift-repo-file,$(repo)) | \
+			$(TAR) --strip-components=1 \
+				-C $(SWIFT_SOURCE_DIR)/$(call swift-repo-dir,$(repo)) \
+				$(TAR_OPTIONS) -; \
+		fi
+	$(sep))
+	ln -sfn .. $(SWIFT_SOURCE_DIR)/swift
 endef
+HOST_SWIFT_POST_EXTRACT_HOOKS += HOST_SWIFT_EXTRACT_SWIFT_SOURCE
+
+# Patch the peer repositories with the same infrastructure buildroot uses for
+# the package itself. swift-source-patches/<repository>/ does not match the
+# *.patch pattern the patch step scans this directory with, so these are not
+# also applied to the swift sources.
+define HOST_SWIFT_PATCH_SWIFT_SOURCE
+	$(foreach dir,$(sort $(wildcard $(HOST_SWIFT_PKGDIR)/swift-source-patches/*)), \
+		$(APPLY_PATCHES) $(SWIFT_SOURCE_DIR)/$(notdir $(dir)) $(dir) \*.patch
+	$(sep))
+endef
+HOST_SWIFT_POST_PATCH_HOOKS += HOST_SWIFT_PATCH_SWIFT_SOURCE
 
 define HOST_SWIFT_BUILD_CMDS
 	# Build
@@ -366,13 +384,25 @@ define HOST_SWIFT_BUILD_CMDS
 	#   is not a full path to an existing compiler tool
 	#
 	# which says nothing about the build that actually failed.
+	#
+	# build-script otherwise works out both the source root and the name of the
+	# directory holding the swift sources from the path of its own file, and
+	# that path is resolved, so through the swift-source/swift symlink it
+	# arrives at the package directory: it would look for the sources of every
+	# product under swift-source/host-swift-$(SWIFT_VERSION) and stop at
+	#
+	#   ERROR: unable to parse files: [...build-presets.ini, FileNotFoundError]
+	#
+	# Both are meant to be overridden, so name them rather than relying on the
+	# layout being inferred correctly.
 	@if [ ! -d "$(SWIFT_LLVM_DIR)" ]; then \
-		(cd $(HOST_SWIFT_SRCDIR)/swift-source \
-			&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
+		(cd $(SWIFT_SOURCE_DIR) \
+			&& SWIFT_SOURCE_ROOT=$(SWIFT_SOURCE_DIR) SWIFT_REPO_NAME=swift \
+			$(SWIFT_SOURCE_DIR)/swift/utils/build-script \
 			--preset=buildbot_linux,no_test \
 			install_destdir=$(HOST_SWIFT_BUILDDIR) \
 			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz) \
-		&& ln -s $(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
+		&& ln -s $(SWIFT_SOURCE_DIR)/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
 	fi
 endef
 
