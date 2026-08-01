@@ -49,19 +49,8 @@ if [ ! -d "$SWIFT_LLVM_DIR" ]; then
     ln -s /usr/lib/llvm-21 $SWIFT_LLVM_DIR
 fi
 
-# Clone Swift StdLib dependencies
-mkdir -p $HOST_SWIFT_SRCDIR/swift-source
-cd $HOST_SWIFT_SRCDIR/swift-source
-if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-corelibs-libdispatch" ]; then
-    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-corelibs-libdispatch.git
-fi
-if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-experimental-string-processing" ]; then
-    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-experimental-string-processing.git
-fi
-if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation" ]; then
-    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/swiftlang/swift-foundation.git
-fi
-if [ ! -d "$HOST_SWIFT_SRCDIR/swift-source/swift-foundation-icu" ]; then
-    git clone --depth 1 --branch $SWIFT_VERSION https://github.com/apple/swift-foundation-icu.git
-fi
+# The Swift stdlib dependencies used to be cloned here. They now come from the
+# host-swift package, which fetches every repository build-script needs as an
+# extra download and patches them through buildroot's patch infrastructure, so
+# cloning them again would only reintroduce sources buildroot does not manage.
 
