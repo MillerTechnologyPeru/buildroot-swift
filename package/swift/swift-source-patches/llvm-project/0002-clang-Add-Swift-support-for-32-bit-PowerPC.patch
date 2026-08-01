@@ -1,38 +1,41 @@
-From 18fa1c96e38828442d139dbf8ca1450f13aa7661 Mon Sep 17 00:00:00 2001
+From cba476e6261305c2aec8fe5d972ad962a00236d2 Mon Sep 17 00:00:00 2001
 From: Alsey Coleman Miller <alseycmiller@gmail.com>
 Date: Fri, 26 Jun 2026 09:14:41 -0400
 Subject: [clang] Add Swift support for 32-bit PowerPC
 
-The Swift side of 32-bit PowerPC support is already in the release; only
-the clang and backend halves of the calling convention are missing.
+The Swift side of 32-bit PowerPC support is already in the release; the
+clang and backend halves of the calling convention are missing.
 
-Sema needs teaching too. PPC32TargetInfo never overrides
-checkCallingConvention - the override in PPC.h belongs to
-PPC64TargetInfo, which is why ppc64le accepts swiftcall and ppc32 does
-not - so the attribute is dropped before CodeGen sees it and every
-SWIFT_CONTEXT parameter in the runtime headers fails to compile. Mirror
-PPC64's table, CC_SwiftAsync included: __has_extension(swiftasynccc) is
-derived from this check, so refusing it makes swift's Config.h fall back
-to SWIFT_CC(swift) instead of emitting an unlowerable convention.
+PPC64TargetInfo accepts CC_Swift, but PPC32TargetInfo overrides
+checkCallingConvention nowhere, so 32-bit inherits the base
+implementation accepting only CC_C: sema drops swiftcall before CodeGen
+sees it and every SWIFT_CONTEXT parameter in the runtime headers fails
+to compile. Add the table, register a SwiftABIInfo, and let
+LowerCall_32SVR4 accept the convention instead of asserting on it.
 
-Upstream: https://github.com/swiftlang/llvm-project/pull/13257 (open, the CodeGen half only)
+The table keeps CC_C returning CCCR_OK, as SystemZ does, so an explicit
+cdecl does not start warning on 32-bit. CC_SwiftAsync stays refused, as
+on PPC64.
+
+Upstream: https://github.com/llvm/llvm-project/pull/213447 (open)
 Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
 ---
- clang/lib/Basic/Targets/PPC.h               | 11 +++++++++++
+ clang/lib/Basic/Targets/PPC.h               | 12 ++++++++++++
  clang/lib/CodeGen/Targets/PPC.cpp           |  5 ++++-
- llvm/lib/Target/PowerPC/PPCISelLowering.cpp |  7 ++++---
+ llvm/lib/Target/PowerPC/PPCISelLowering.cpp |  6 +++---
  3 files changed, 19 insertions(+), 4 deletions(-)
 
 diff --git a/clang/lib/Basic/Targets/PPC.h b/clang/lib/Basic/Targets/PPC.h
-index 9f3a4cd2da716..420a01e93d957 100644
+index 9f3a4cd2da716..6ea0e40e41102 100644
 --- a/clang/lib/Basic/Targets/PPC.h
 +++ b/clang/lib/Basic/Targets/PPC.h
-@@ -431,6 +431,17 @@ public:
+@@ -431,6 +431,18 @@ public:
      return TargetInfo::PowerABIBuiltinVaList;
    }
  
 +  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
 +    switch (CC) {
++    case CC_C:
 +    case CC_Swift:
 +      return CCCR_OK;
 +    case CC_SwiftAsync:
@@ -62,10 +65,10 @@ index 4df4c9f3c3475..c4cd04735a3ee 100644
    static bool isStructReturnInRegABI(const llvm::Triple &Triple,
                                       const CodeGenOptions &Opts);
 diff --git a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-index b6db0abcc86d0..b18aa09b50092 100644
+index b6db0abcc86d0..0fdd96710266b 100644
 --- a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
 +++ b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-@@ -5995,9 +5995,10 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
+@@ -5995,9 +5995,9 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
    const bool IsVarArg = CFlags.IsVarArg;
    const bool IsTailCall = CFlags.IsTailCall;
  
@@ -73,8 +76,7 @@ index b6db0abcc86d0..b18aa09b50092 100644
 -          CallConv == CallingConv::Cold ||
 -          CallConv == CallingConv::Fast) && "Unknown calling convention!");
 +  assert((CallConv == CallingConv::C || CallConv == CallingConv::Cold ||
-+          CallConv == CallingConv::Fast || CallConv == CallingConv::Swift ||
-+          CallConv == CallingConv::SwiftTail) &&
++          CallConv == CallingConv::Fast || CallConv == CallingConv::Swift) &&
 +         "Unknown calling convention!");
  
    const Align PtrAlign(4);
