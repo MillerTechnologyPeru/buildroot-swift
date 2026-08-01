@@ -1,0 +1,139 @@
+From d41605bc90403f3958f72d1792dc1cc19a9abe40 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Wed, 24 Jun 2026 20:38:04 -0400
+Subject: [stdlib] Add MIPS support
+
+
+Only the first commit of the pull request is taken. The follow-up commit
+dropped the big-endian mips and mips64 variants to get the change merged
+upstream; buildroot-swift builds both endiannesses, so it keeps them.
+
+Upstream: https://github.com/swiftlang/swift/pull/41695 (merged to main after swift-6.3.3-RELEASE)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ cmake/modules/AddSwift.cmake              |  4 ++--
+ cmake/modules/AddSwiftUnittests.cmake     |  2 +-
+ cmake/modules/SwiftConfigureSDK.cmake     |  2 +-
+ cmake/modules/SwiftSetIfArchBitness.cmake |  4 ++++
+ lib/Basic/LangOptions.cpp                 | 16 ++++++++++++++++
+ stdlib/public/stubs/MathStubs.cpp         |  2 +-
+ 6 files changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/cmake/modules/AddSwift.cmake b/cmake/modules/AddSwift.cmake
+index b52fe0d5c0c4c..4faf89180f620 100644
+--- a/cmake/modules/AddSwift.cmake
++++ b/cmake/modules/AddSwift.cmake
+@@ -340,7 +340,7 @@ function(_add_host_variant_c_compile_flags target)
+   # The LLVM backend is built with these defines on most 32-bit platforms,
+   # llvm/llvm-project@66395c9, which can cause incompatibilities with the Swift
+   # frontend if not built the same way.
+-  if("${SWIFT_HOST_VARIANT_ARCH}" MATCHES "armv6|armv7|i686" AND
++  if("${SWIFT_HOST_VARIANT_ARCH}" MATCHES "mips|mipsel|armv6|armv7|i686" AND
+      NOT (SWIFT_HOST_VARIANT_SDK STREQUAL "ANDROID" AND SWIFT_ANDROID_API_LEVEL LESS 24))
+     target_compile_definitions(${target} PRIVATE
+       $<$<COMPILE_LANGUAGE:C,CXX,OBJC,OBJCXX>:_LARGEFILE_SOURCE _FILE_OFFSET_BITS=64>)
+@@ -357,7 +357,7 @@ function(_add_host_variant_link_flags target)
+     target_link_libraries(${target} PRIVATE
+       pthread
+       dl)
+-    if("${SWIFT_HOST_VARIANT_ARCH}" MATCHES "armv5|armv6|armv7|i686")
++    if("${SWIFT_HOST_VARIANT_ARCH}" MATCHES "mips|mipsel|armv5|armv6|armv7|i686")
+       target_link_libraries(${target} PRIVATE atomic)
+     endif()
+   elseif(SWIFT_HOST_VARIANT_SDK STREQUAL "FREEBSD")
+diff --git a/cmake/modules/AddSwiftUnittests.cmake b/cmake/modules/AddSwiftUnittests.cmake
+index 69fe120d6493a..5668a60c74679 100644
+--- a/cmake/modules/AddSwiftUnittests.cmake
++++ b/cmake/modules/AddSwiftUnittests.cmake
+@@ -59,7 +59,7 @@ function(add_swift_unittest test_dirname)
+     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+       target_compile_options(${test_dirname} PRIVATE
+         -march=core2)
+-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv5|armv6|armv7|i686")
++    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips|mipsel|armv5|armv6|armv7|i686")
+       set_property(TARGET "${test_dirname}" APPEND PROPERTY LINK_LIBRARIES
+         "atomic")
+     endif()
+diff --git a/cmake/modules/SwiftConfigureSDK.cmake b/cmake/modules/SwiftConfigureSDK.cmake
+index 850f4fd605f0b..fd5f59b378e7b 100644
+--- a/cmake/modules/SwiftConfigureSDK.cmake
++++ b/cmake/modules/SwiftConfigureSDK.cmake
+@@ -421,7 +421,7 @@ macro(configure_sdk_unix name architectures)
+             set(SWIFT_SDK_LINUX_ARCH_${arch}_TRIPLE "${arch}-unknown-linux-gnueabi")
+           elseif(arch MATCHES "(armv6|armv7)")
+             set(SWIFT_SDK_LINUX_ARCH_${arch}_TRIPLE "${arch}-unknown-linux-gnueabihf")
+-          elseif(arch MATCHES "(aarch64|i686|powerpc|powerpc64|powerpc64le|s390x|x86_64|riscv64)")
++          elseif(arch MATCHES "(aarch64|i686|powerpc|powerpc64|powerpc64le|s390x|x86_64|riscv64|mips|mipsel|mips64|mips64el)")
+             set(SWIFT_SDK_LINUX_ARCH_${arch}_TRIPLE "${arch}-unknown-linux-gnu")
+           else()
+             message(FATAL_ERROR "unknown arch for ${prefix}: ${arch}")
+diff --git a/cmake/modules/SwiftSetIfArchBitness.cmake b/cmake/modules/SwiftSetIfArchBitness.cmake
+index 41eceeec3bccd..7d8cb1d82ddf6 100644
+--- a/cmake/modules/SwiftSetIfArchBitness.cmake
++++ b/cmake/modules/SwiftSetIfArchBitness.cmake
+@@ -14,6 +14,8 @@ function(set_if_arch_bitness var_name)
+      "${SIA_ARCH}" STREQUAL "armv4t" OR
+      "${SIA_ARCH}" STREQUAL "armv5" OR
+      "${SIA_ARCH}" STREQUAL "armv5te" OR
++     "${SIA_ARCH}" STREQUAL "mips" OR
++     "${SIA_ARCH}" STREQUAL "mipsel" OR
+      "${SIA_ARCH}" STREQUAL "armv6" OR
+      "${SIA_ARCH}" STREQUAL "armv6m" OR
+      "${SIA_ARCH}" STREQUAL "armv7" OR
+@@ -36,6 +38,8 @@ function(set_if_arch_bitness var_name)
+      "${SIA_ARCH}" STREQUAL "aarch64" OR
+      "${SIA_ARCH}" STREQUAL "powerpc64" OR
+      "${SIA_ARCH}" STREQUAL "powerpc64le" OR
++     "${SIA_ARCH}" STREQUAL "mips64" OR
++     "${SIA_ARCH}" STREQUAL "mips64el" OR
+      "${SIA_ARCH}" STREQUAL "s390x" OR
+      "${SIA_ARCH}" STREQUAL "riscv64" OR
+      "${SIA_ARCH}" STREQUAL "wasm64")
+diff --git a/lib/Basic/LangOptions.cpp b/lib/Basic/LangOptions.cpp
+index 05c3438e8af99..8c0fa4501fc2b 100644
+--- a/lib/Basic/LangOptions.cpp
++++ b/lib/Basic/LangOptions.cpp
+@@ -100,6 +100,10 @@ static const SupportedConditionalValue SupportedConditionalCompilationArches[] =
+   "powerpc",
+   "powerpc64",
+   "powerpc64le",
++  "mips",
++  "mipsel",
++  "mips64",
++  "mips64el",
+   "s390x",
+   "wasm32",
+   "riscv32",
+@@ -621,6 +625,18 @@ std::pair<bool, bool> LangOptions::setTarget(llvm::Triple triple) {
+   case llvm::Triple::ArchType::ppc64le:
+     addPlatformConditionValue(PlatformConditionKind::Arch, "powerpc64le");
+     break;
++  case llvm::Triple::ArchType::mips:
++    addPlatformConditionValue(PlatformConditionKind::Arch, "mips");
++    break;
++  case llvm::Triple::ArchType::mipsel:
++    addPlatformConditionValue(PlatformConditionKind::Arch, "mipsel");
++    break;
++  case llvm::Triple::ArchType::mips64:
++    addPlatformConditionValue(PlatformConditionKind::Arch, "mips64");
++    break;
++  case llvm::Triple::ArchType::mips64el:
++    addPlatformConditionValue(PlatformConditionKind::Arch, "mips64el");
++    break;
+   case llvm::Triple::ArchType::x86:
+     addPlatformConditionValue(PlatformConditionKind::Arch, "i386");
+     break;
+diff --git a/stdlib/public/stubs/MathStubs.cpp b/stdlib/public/stubs/MathStubs.cpp
+index fbab170b2aad8..2760ba8c4ce0e 100644
+--- a/stdlib/public/stubs/MathStubs.cpp
++++ b/stdlib/public/stubs/MathStubs.cpp
+@@ -113,7 +113,7 @@ __muloti4(ti_int a, ti_int b, int* overflow)
+ // lowered to instructions as though MSVC had generated.  There does not seem to
+ // be a MSVC provided multiply with overflow detection that I can see, but this
+ // avoids an unnecessary dependency on compiler-rt for a single function.
+-#if (defined(__linux__) && (defined(__arm__) || defined(__i386__) || defined(__powerpc__))) || defined(_WIN32)
++#if (defined(__linux__) && (defined(__arm__) || defined(__i386__) || defined(__powerpc__) || (defined(__mips__) && !defined(__LP64__)))) || defined(_WIN32)
+ 
+ // Similar to above, but with mulodi4.  Perhaps this is
+ // something that shouldn't be done, and is a bandaid over
+
