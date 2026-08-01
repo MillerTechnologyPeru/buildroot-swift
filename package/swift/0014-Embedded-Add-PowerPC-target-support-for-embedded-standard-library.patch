@@ -1,0 +1,31 @@
+From 700ff639b44ba24c1c1e721b51b3f83a61fb67d8 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Tue, 23 Jun 2026 18:02:50 -0400
+Subject: [PATCH] [Embedded] Add PowerPC target support for embedded standard
+ library
+
+Rebased onto the MIPS embedded triples patch, which upstream does not have
+applied ahead of it.
+
+Upstream: https://github.com/swiftlang/swift/pull/90141 (open)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ stdlib/public/CMakeLists.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/stdlib/public/CMakeLists.txt b/stdlib/public/CMakeLists.txt
+--- a/stdlib/public/CMakeLists.txt
++++ b/stdlib/public/CMakeLists.txt
+@@ -258,6 +258,12 @@ if(SWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING)
+         "mips64el mips64el-none-none-elf mips64el-none-none-elf"
+       )
+     endif()
++
++    if("PowerPC" IN_LIST LLVM_TARGETS_TO_BUILD)
++      list(APPEND EMBEDDED_STDLIB_TARGET_TRIPLES
++        "powerpc  powerpc-none-none-eabi    powerpc-none-none-eabi"
++      )
++    endif()
+   endif()
+ endif()
+
