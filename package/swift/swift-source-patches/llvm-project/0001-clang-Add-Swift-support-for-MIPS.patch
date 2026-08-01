@@ -1,0 +1,33 @@
+From cd4382da1d35c5ba89c5ee06287499ba57a27496 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Wed, 24 Jun 2026 20:15:51 -0400
+Subject: [clang] Add Swift support for MIPS
+
+Adds support for compiling Swift targeting the MIPS ABI
+
+Without a registered SwiftABIInfo, clang aborts with "Swift ABI info has
+not been initialized" as soon as anything is compiled for MIPS with the
+Swift calling convention.
+
+Upstream: https://github.com/swiftlang/llvm-project/pull/13246 (open)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ clang/lib/CodeGen/Targets/Mips.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/clang/lib/CodeGen/Targets/Mips.cpp b/clang/lib/CodeGen/Targets/Mips.cpp
+index 22fdcd95ea8fa..3693e5dbfa91c 100644
+--- a/clang/lib/CodeGen/Targets/Mips.cpp
++++ b/clang/lib/CodeGen/Targets/Mips.cpp
+@@ -44,7 +44,10 @@ class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
+ public:
+   MIPSTargetCodeGenInfo(CodeGenTypes &CGT, bool IsO32)
+       : TargetCodeGenInfo(std::make_unique<MipsABIInfo>(CGT, IsO32)),
+-        SizeOfUnwindException(IsO32 ? 24 : 32) {}
++        SizeOfUnwindException(IsO32 ? 24 : 32) {
++    SwiftInfo =
++        std::make_unique<SwiftABIInfo>(CGT, /*SwiftErrorInRegister=*/false);
++  }
+ 
+   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const override {
+     return 29;
