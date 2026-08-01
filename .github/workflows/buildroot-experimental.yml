@@ -1,0 +1,50 @@
+name: Buildroot experimental
+# Architectures that build the Swift stdlib but are not yet proven enough to
+# gate every push. MIPS and 32-bit PowerPC additionally need a host toolchain
+# whose clang carries the Swift calling convention for them - see
+# package/swift/swift-source-patches/llvm-project/. The prebuilt toolchain
+# install-swift.sh downloads does not, so supply one through toolchain_url,
+# or the stdlib will be built by a clang that silently ignores swiftcall.
+on:
+    workflow_dispatch:
+        inputs:
+            toolchain_url:
+                description: "Host Swift toolchain tarball (blank = stock swift.org build)"
+                required: false
+                default: ""
+jobs:
+
+    build:
+        name: Build Swift for Buildroot (${{ matrix.config }})
+        strategy:
+          fail-fast: false
+          matrix:
+            config: ["riscv64", "ppc", "mipsel", "mips64el", "mips", "mips64"]
+        runs-on: ubuntu-latest
+        container: swift:6.3.3-bookworm
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Build
+          run: |
+            export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
+            export DEFCONFIG=swift_${{ matrix.config }}_defconfig
+            export SWIFT_NATIVE_TOOLS=/workspaces/swift/usr/bin
+            export SWIFT_LLVM_DIR=/workspaces/llvm
+            export BUILDROOT_DIR=/workspaces/buildroot
+            export BUILDROOT_RELEASE=2026.05
+            export DEBIAN_FRONTEND=noninteractive
+            export DEBCONF_NONINTERACTIVE_SEEN=true
+            if [ -n "${{ inputs.toolchain_url }}" ]; then
+              export SWIFT_BIN_URL="${{ inputs.toolchain_url }}"
+            fi
+            apt update
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-dependencies.sh
+            $SWIFT_BUILDROOT/.devcontainer/library-scripts/install-swift.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/download-buildroot.sh
+            $SWIFT_BUILDROOT/.devcontainer/build-scripts/build.sh
+        - name: Archive Build artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: build-${{ matrix.config }}
+            path: /workspaces/buildroot/output/images
