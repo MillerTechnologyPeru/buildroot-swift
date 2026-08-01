@@ -1,6 +1,33 @@
 # buildroot-swift
 Buildroot external to support the Swift programming language
 
+## Supported architectures
+
+Every architecture below is built and smoke-tested on each push. Pick the
+matching defconfig, e.g. `make swift_mipsel_defconfig`.
+
+| defconfig | Architecture | libc |
+| --- | --- | --- |
+| `swift_arm64_defconfig` | AArch64 | glibc |
+| `swift_armv7_defconfig` | Armv7-A, hard float | glibc |
+| `swift_armv6_defconfig` | Armv6, hard float | glibc |
+| `swift_armv5_defconfig` | Armv5TE | glibc |
+| `swift_x86_64_defconfig` | x86-64 | glibc |
+| `swift_x86_64_musl_defconfig` | x86-64 | musl |
+| `swift_i386_defconfig` | i686 | glibc |
+| `swift_ppc64le_defconfig` | PowerPC 64-bit, little endian | glibc |
+| `swift_ppc_defconfig` | PowerPC 32-bit | glibc |
+| `swift_mipsel_defconfig` | MIPS 32r6, little endian | glibc |
+| `swift_mips_defconfig` | MIPS 32r6, big endian | glibc |
+| `swift_mips64el_defconfig` | MIPS 64r6 N64, little endian | glibc |
+| `swift_mips64_defconfig` | MIPS 64r6 N64, big endian | glibc |
+| `swift_riscv64_defconfig` | RISC-V 64-bit | glibc |
+
+MIPS and 32-bit PowerPC need Swift calling convention support that is not in
+the Swift release yet. It is carried in
+`package/swift/swift-source-patches/llvm-project/`, alongside the stdlib
+patches in `package/swift/`.
+
 ## Swift sources
 
 The Swift toolchain is built by swift's own `build-script`, which expects the
