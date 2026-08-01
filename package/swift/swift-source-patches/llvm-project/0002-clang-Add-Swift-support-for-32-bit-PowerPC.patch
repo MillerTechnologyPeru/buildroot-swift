@@ -3,22 +3,53 @@ From: Alsey Coleman Miller <alseycmiller@gmail.com>
 Date: Fri, 26 Jun 2026 09:14:41 -0400
 Subject: [clang] Add Swift support for 32-bit PowerPC
 
-
 The Swift side of 32-bit PowerPC support is already in the release; only
 the clang and backend halves of the calling convention are missing.
 
-Upstream: https://github.com/swiftlang/llvm-project/pull/13257 (open)
+Sema needs teaching too. PPC32TargetInfo never overrides
+checkCallingConvention - the override in PPC.h belongs to
+PPC64TargetInfo, which is why ppc64le accepts swiftcall and ppc32 does
+not - so the attribute is dropped before CodeGen sees it and every
+SWIFT_CONTEXT parameter in the runtime headers fails to compile. Mirror
+PPC64's table, CC_SwiftAsync included: __has_extension(swiftasynccc) is
+derived from this check, so refusing it makes swift's Config.h fall back
+to SWIFT_CC(swift) instead of emitting an unlowerable convention.
+
+Upstream: https://github.com/swiftlang/llvm-project/pull/13257 (open, the CodeGen half only)
 Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
 ---
- clang/lib/CodeGen/Targets/PPC.cpp           | 5 ++++-
- llvm/lib/Target/PowerPC/PPCISelLowering.cpp | 7 ++++---
- 2 files changed, 8 insertions(+), 4 deletions(-)
+ clang/lib/Basic/Targets/PPC.h               | 11 +++++++++++
+ clang/lib/CodeGen/Targets/PPC.cpp           |  5 ++++-
+ llvm/lib/Target/PowerPC/PPCISelLowering.cpp |  7 ++++---
+ 3 files changed, 19 insertions(+), 4 deletions(-)
 
+diff --git a/clang/lib/Basic/Targets/PPC.h b/clang/lib/Basic/Targets/PPC.h
+index 9f3a4cd2da716..420a01e93d957 100644
+--- a/clang/lib/Basic/Targets/PPC.h
++++ b/clang/lib/Basic/Targets/PPC.h
+@@ -431,6 +431,17 @@ public:
+     return TargetInfo::PowerABIBuiltinVaList;
+   }
+ 
++  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
++    switch (CC) {
++    case CC_Swift:
++      return CCCR_OK;
++    case CC_SwiftAsync:
++      return CCCR_Error;
++    default:
++      return CCCR_Warning;
++    }
++  }
++
+   std::pair<unsigned, unsigned> hardwareInterferenceSizes() const override {
+     return std::make_pair(32, 32);
+   }
 diff --git a/clang/lib/CodeGen/Targets/PPC.cpp b/clang/lib/CodeGen/Targets/PPC.cpp
-index ab069bfbd1b51..d2e8d607806b5 100644
+index 4df4c9f3c3475..c4cd04735a3ee 100644
 --- a/clang/lib/CodeGen/Targets/PPC.cpp
 +++ b/clang/lib/CodeGen/Targets/PPC.cpp
-@@ -387,7 +387,10 @@ class PPC32TargetCodeGenInfo : public TargetCodeGenInfo {
+@@ -358,7 +358,10 @@ public:
    PPC32TargetCodeGenInfo(CodeGenTypes &CGT, bool SoftFloatABI,
                           bool RetSmallStructInRegABI)
        : TargetCodeGenInfo(std::make_unique<PPC32_SVR4_ABIInfo>(
@@ -31,10 +62,10 @@ index ab069bfbd1b51..d2e8d607806b5 100644
    static bool isStructReturnInRegABI(const llvm::Triple &Triple,
                                       const CodeGenOptions &Opts);
 diff --git a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-index 76cc06f2b4ed9..1c30846a3182c 100644
+index b6db0abcc86d0..b18aa09b50092 100644
 --- a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
 +++ b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-@@ -5978,9 +5978,10 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
+@@ -5995,9 +5995,10 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
    const bool IsVarArg = CFlags.IsVarArg;
    const bool IsTailCall = CFlags.IsTailCall;
  
