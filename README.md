@@ -15,6 +15,7 @@ Built and smoke-tested on every push:
 | `swift_x86_64_musl_defconfig` | x86-64 | musl |
 | `swift_i386_defconfig` | i686 | glibc |
 | `swift_ppc64le_defconfig` | PowerPC 64-bit, little endian | glibc |
+| `swift_riscv64_defconfig` | RISC-V 64-bit | glibc |
 
 ### Experimental
 
@@ -28,7 +29,6 @@ which is run by hand rather than on every push.
 | `swift_mips_defconfig` | MIPS 32r6, big endian | glibc |
 | `swift_mips64el_defconfig` | MIPS 64r6 N64, little endian | glibc |
 | `swift_mips64_defconfig` | MIPS 64r6 N64, big endian | glibc |
-| `swift_riscv64_defconfig` | RISC-V 64-bit | glibc |
 
 MIPS and 32-bit PowerPC need the Swift calling convention in clang, which no
 Swift release carries yet. The patches are in
@@ -39,8 +39,9 @@ skip its own build. Pass a toolchain that carries them through the workflow's
 `toolchain_url` input, or those two architectures are built by a clang that
 ignores `swiftcall`.
 
-RISC-V 64 needs no such patch - `RISCVTargetCodeGenInfo` already registers a
-`SwiftABIInfo` upstream.
+RISC-V 64 needed no such patch - `RISCVTargetCodeGenInfo` already registers a
+`SwiftABIInfo` upstream - which is why it builds with the prebuilt toolchain
+and is gated on every push rather than run by hand.
 
 ## Swift sources
 
