@@ -380,8 +380,26 @@ define HOST_SWIFT_BUILD_CMDS
 	#   is not a full path to an existing compiler tool
 	#
 	# which says nothing about the build that actually failed.
+	#
+	# PATH is given the build's own LLVM bin directory ahead of the system
+	# one. build-script's C/C++/Swift builds pass an explicit compiler, but
+	# late in the same run swift-sdk-generator shells out to the system
+	# swift-run to build the WebAssembly SDK, and that invokes SwiftPM, which
+	# auto-enables indexing-while-building and hands "clang" (resolved from
+	# PATH) an -index-store-path flag. A distro clang without libIndexStore
+	# rejects it outright:
+	#
+	#   clang: error: unknown argument: '-index-store-path'
+	#
+	# Debian's packaged clang-19 is exactly such a build; the clang this same
+	# recipe is compiling right now, from swiftlang's LLVM fork, accepts the
+	# flag - confirmed directly against the built binary. The directory does
+	# not exist until partway through the build, so early on this PATH entry
+	# is simply not found and every invocation falls through to the system
+	# compiler as before.
 	@if [ ! -d "$(SWIFT_LLVM_DIR)" ]; then \
 		(cd $(HOST_SWIFT_SRCDIR)/swift-source \
+			&& export PATH="$(HOST_SWIFT_SRCDIR)/swift-source/build/buildbot_linux/llvm-linux-$(shell uname -m)/bin:$$PATH" \
 			&& $(HOST_SWIFT_SRCDIR)/swift-source/swift/utils/build-script \
 			--preset=buildbot_linux,no_test \
 			install_destdir=$(HOST_SWIFT_BUILDDIR) \
