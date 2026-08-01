@@ -1,24 +1,58 @@
-From 18fa1c96e38828442d139dbf8ca1450f13aa7661 Mon Sep 17 00:00:00 2001
+From cba476e6261305c2aec8fe5d972ad962a00236d2 Mon Sep 17 00:00:00 2001
 From: Alsey Coleman Miller <alseycmiller@gmail.com>
 Date: Fri, 26 Jun 2026 09:14:41 -0400
 Subject: [clang] Add Swift support for 32-bit PowerPC
 
+The Swift side of 32-bit PowerPC support is already in the release; the
+clang and backend halves of the calling convention are missing.
 
-The Swift side of 32-bit PowerPC support is already in the release; only
-the clang and backend halves of the calling convention are missing.
+PPC64TargetInfo accepts CC_Swift, but PPC32TargetInfo overrides
+checkCallingConvention nowhere, so 32-bit inherits the base
+implementation accepting only CC_C: sema drops swiftcall before CodeGen
+sees it and every SWIFT_CONTEXT parameter in the runtime headers fails
+to compile. Add the table, register a SwiftABIInfo, and let
+LowerCall_32SVR4 accept the convention instead of asserting on it.
 
-Upstream: https://github.com/swiftlang/llvm-project/pull/13257 (open)
+The table keeps CC_C returning CCCR_OK, as SystemZ does, so an explicit
+cdecl does not start warning on 32-bit. CC_SwiftAsync stays refused, as
+on PPC64.
+
+Upstream: https://github.com/llvm/llvm-project/pull/213447 (open)
 Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
 ---
- clang/lib/CodeGen/Targets/PPC.cpp           | 5 ++++-
- llvm/lib/Target/PowerPC/PPCISelLowering.cpp | 7 ++++---
- 2 files changed, 8 insertions(+), 4 deletions(-)
+ clang/lib/Basic/Targets/PPC.h               | 12 ++++++++++++
+ clang/lib/CodeGen/Targets/PPC.cpp           |  5 ++++-
+ llvm/lib/Target/PowerPC/PPCISelLowering.cpp |  6 +++---
+ 3 files changed, 19 insertions(+), 4 deletions(-)
 
+diff --git a/clang/lib/Basic/Targets/PPC.h b/clang/lib/Basic/Targets/PPC.h
+index 9f3a4cd2da716..6ea0e40e41102 100644
+--- a/clang/lib/Basic/Targets/PPC.h
++++ b/clang/lib/Basic/Targets/PPC.h
+@@ -431,6 +431,18 @@ public:
+     return TargetInfo::PowerABIBuiltinVaList;
+   }
+ 
++  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
++    switch (CC) {
++    case CC_C:
++    case CC_Swift:
++      return CCCR_OK;
++    case CC_SwiftAsync:
++      return CCCR_Error;
++    default:
++      return CCCR_Warning;
++    }
++  }
++
+   std::pair<unsigned, unsigned> hardwareInterferenceSizes() const override {
+     return std::make_pair(32, 32);
+   }
 diff --git a/clang/lib/CodeGen/Targets/PPC.cpp b/clang/lib/CodeGen/Targets/PPC.cpp
-index ab069bfbd1b51..d2e8d607806b5 100644
+index 4df4c9f3c3475..c4cd04735a3ee 100644
 --- a/clang/lib/CodeGen/Targets/PPC.cpp
 +++ b/clang/lib/CodeGen/Targets/PPC.cpp
-@@ -387,7 +387,10 @@ class PPC32TargetCodeGenInfo : public TargetCodeGenInfo {
+@@ -358,7 +358,10 @@ public:
    PPC32TargetCodeGenInfo(CodeGenTypes &CGT, bool SoftFloatABI,
                           bool RetSmallStructInRegABI)
        : TargetCodeGenInfo(std::make_unique<PPC32_SVR4_ABIInfo>(
@@ -31,10 +65,10 @@ index ab069bfbd1b51..d2e8d607806b5 100644
    static bool isStructReturnInRegABI(const llvm::Triple &Triple,
                                       const CodeGenOptions &Opts);
 diff --git a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-index 76cc06f2b4ed9..1c30846a3182c 100644
+index b6db0abcc86d0..0fdd96710266b 100644
 --- a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
 +++ b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
-@@ -5978,9 +5978,10 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
+@@ -5995,9 +5995,9 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
    const bool IsVarArg = CFlags.IsVarArg;
    const bool IsTailCall = CFlags.IsTailCall;
  
@@ -42,8 +76,7 @@ index 76cc06f2b4ed9..1c30846a3182c 100644
 -          CallConv == CallingConv::Cold ||
 -          CallConv == CallingConv::Fast) && "Unknown calling convention!");
 +  assert((CallConv == CallingConv::C || CallConv == CallingConv::Cold ||
-+          CallConv == CallingConv::Fast || CallConv == CallingConv::Swift ||
-+          CallConv == CallingConv::SwiftTail) &&
++          CallConv == CallingConv::Fast || CallConv == CallingConv::Swift) &&
 +         "Unknown calling convention!");
  
    const Align PtrAlign(4);

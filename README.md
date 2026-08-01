@@ -30,17 +30,21 @@ which is run by hand rather than on every push.
 | `swift_mips64_defconfig` | MIPS 64r6 N64, big endian | glibc |
 | `swift_riscv64_defconfig` | RISC-V 64-bit | glibc |
 
-MIPS and 32-bit PowerPC need the Swift calling convention in clang, which no
-Swift release carries yet. The patches are in
+MIPS, 32-bit PowerPC and RISC-V need the Swift calling convention in clang,
+which no Swift release carries yet. The patches are in
 `package/swift/swift-source-patches/llvm-project/`, but they only take effect
 in a toolchain built from source: `install-swift.sh` downloads a prebuilt one
 and symlinks `SWIFT_LLVM_DIR` at the system LLVM, which makes `host-swift`
 skip its own build. Pass a toolchain that carries them through the workflow's
-`toolchain_url` input, or those two architectures are built by a clang that
+`toolchain_url` input, or those architectures are built by a clang that
 ignores `swiftcall`.
 
-RISC-V 64 needs no such patch - `RISCVTargetCodeGenInfo` already registers a
-`SwiftABIInfo` upstream.
+RISC-V 64 looks at first like it needs no such patch - `RISCVTargetCodeGenInfo`
+does register a `SwiftABIInfo` upstream - but that is only the CodeGen half.
+`RISCVTargetInfo::checkCallingConvention` rejects `CC_Swift`, so sema drops the
+attribute before CodeGen ever sees it and the runtime headers fail on every
+`SWIFT_CONTEXT` parameter, and `LowerFormalArguments` has no case for
+`CallingConv::Swift`. Both are patched here.
 
 ## Swift sources
 

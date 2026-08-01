@@ -1,0 +1,55 @@
+From 4be15ecb3bdada0a7b15d77988c4d6d7cb97a655 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sat, 1 Aug 2026 08:23:59 -0400
+Subject: [clang] Add Swift support for RISC-V
+
+RISCVTargetCodeGenInfo already registers a SwiftABIInfo, so the CodeGen
+half is in place, but nothing reaches it:
+RISCVTargetInfo::checkCallingConvention never accepts CC_Swift, so sema
+drops the attribute and substitutes the default convention. Every
+SWIFT_CONTEXT parameter in the runtime headers then fails with
+'swift_context' parameter can only be used with swiftcall or
+swiftasynccall calling convention, which is where building the stdlib
+for riscv64 stops.
+
+Accept CC_Swift and lower it: without a case in LowerFormalArguments the
+switch falls to its default and aborts with 'Unsupported calling
+convention'. It needs no separate assignment - CC_RISCV is what the C
+convention already uses, and SwiftErrorInRegister is false, so the error
+is passed indirectly. CC_SwiftAsync is refused the way SystemZ and PPC64
+refuse it, so swift's Config.h falls back to SWIFT_CC(swift) for it.
+
+Upstream: https://github.com/llvm/llvm-project/pull/213448 (open)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ clang/lib/Basic/Targets/RISCV.cpp           | 3 +++
+ llvm/lib/Target/RISCV/RISCVISelLowering.cpp | 1 +
+ 2 files changed, 4 insertions(+)
+
+diff --git a/clang/lib/Basic/Targets/RISCV.cpp b/clang/lib/Basic/Targets/RISCV.cpp
+index 8a28c0788aad7..17b8db2143133 100644
+--- a/clang/lib/Basic/Targets/RISCV.cpp
++++ b/clang/lib/Basic/Targets/RISCV.cpp
+@@ -607,7 +607,10 @@ RISCVTargetInfo::checkCallingConvention(CallingConv CC) const {
+   case CC_RISCVVLSCall_16384:
+   case CC_RISCVVLSCall_32768:
+   case CC_RISCVVLSCall_65536:
++  case CC_Swift:
+     return CCCR_OK;
++  case CC_SwiftAsync:
++    return CCCR_Error;
+   }
+ }
+ 
+diff --git a/llvm/lib/Target/RISCV/RISCVISelLowering.cpp b/llvm/lib/Target/RISCV/RISCVISelLowering.cpp
+index 567ef2ff19f06..d3fb2af20265b 100644
+--- a/llvm/lib/Target/RISCV/RISCVISelLowering.cpp
++++ b/llvm/lib/Target/RISCV/RISCVISelLowering.cpp
+@@ -22239,6 +22239,7 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
+   case CallingConv::PreserveMost:
+   case CallingConv::GRAAL:
+   case CallingConv::RISCV_VectorCall:
++  case CallingConv::Swift:
+ #define CC_VLS_CASE(ABI_VLEN) case CallingConv::RISCV_VLSCall_##ABI_VLEN:
+     CC_VLS_CASE(32)
+     CC_VLS_CASE(64)

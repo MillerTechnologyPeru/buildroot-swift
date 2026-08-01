@@ -1,22 +1,57 @@
-From cd4382da1d35c5ba89c5ee06287499ba57a27496 Mon Sep 17 00:00:00 2001
+From dea5f937ef8c851a668e3334a701b023de9ad2e9 Mon Sep 17 00:00:00 2001
 From: Alsey Coleman Miller <alseycmiller@gmail.com>
 Date: Wed, 24 Jun 2026 20:15:51 -0400
 Subject: [clang] Add Swift support for MIPS
 
-Adds support for compiling Swift targeting the MIPS ABI
+Compiling anything for MIPS with the Swift calling convention fails in
+two places.
 
-Without a registered SwiftABIInfo, clang aborts with "Swift ABI info has
-not been initialized" as soon as anything is compiled for MIPS with the
-Swift calling convention.
+MipsTargetInfo does not override checkCallingConvention, so it inherits
+the base implementation accepting only CC_C: sema drops swiftcall and
+substitutes the default convention, after which every SWIFT_CONTEXT
+parameter in the runtime headers is a hard error. Past that,
+MIPSTargetCodeGenInfo registers no SwiftABIInfo, so clang aborts with
+"Swift ABI info has not been initialized".
 
-Upstream: https://github.com/swiftlang/llvm-project/pull/13246 (open)
+Accept CC_Swift and register the SwiftABIInfo. The convention is lowered
+like the C convention, and SwiftErrorInRegister is false so the error is
+passed indirectly - the backend needs no change, having no calling
+convention gate of its own. CC_SwiftAsync is refused the way SystemZ and
+PPC64 refuse it, so __has_extension(swiftasynccc) stays false and
+swift's Config.h falls back to SWIFT_CC(swift).
+
+Upstream: https://github.com/llvm/llvm-project/pull/213446 (open)
 Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
 ---
- clang/lib/CodeGen/Targets/Mips.cpp | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ clang/lib/Basic/Targets/Mips.h     | 12 ++++++++++++
+ clang/lib/CodeGen/Targets/Mips.cpp |  5 ++++-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
 
+diff --git a/clang/lib/Basic/Targets/Mips.h b/clang/lib/Basic/Targets/Mips.h
+index e199df32f56ee..12e0a0fd2d7fa 100644
+--- a/clang/lib/Basic/Targets/Mips.h
++++ b/clang/lib/Basic/Targets/Mips.h
+@@ -447,6 +447,18 @@ public:
+   bool validateTarget(DiagnosticsEngine &Diags) const override;
+   bool hasBitIntType() const override { return true; }
+ 
++  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
++    switch (CC) {
++    case CC_C:
++    case CC_Swift:
++      return CCCR_OK;
++    case CC_SwiftAsync:
++      return CCCR_Error;
++    default:
++      return CCCR_Warning;
++    }
++  }
++
+   std::pair<unsigned, unsigned> hardwareInterferenceSizes() const override {
+     return std::make_pair(32, 32);
+   }
 diff --git a/clang/lib/CodeGen/Targets/Mips.cpp b/clang/lib/CodeGen/Targets/Mips.cpp
-index 22fdcd95ea8fa..3693e5dbfa91c 100644
+index c025f7312959c..cf4bd41a74415 100644
 --- a/clang/lib/CodeGen/Targets/Mips.cpp
 +++ b/clang/lib/CodeGen/Targets/Mips.cpp
 @@ -44,7 +44,10 @@ class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
