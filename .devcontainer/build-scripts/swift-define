@@ -15,7 +15,11 @@ export FORCE_UNSAFE_CONFIGURE=1
 BUILDROOT_DEFCONFIG=swift_${SWIFT_TARGET_ARCH}_defconfig
 BUILDROOT_DIR=$WORKING_DIR/buildroot
 BR2_EXTERNAL=$SWIFT_BUILDROOT
-BUILDROOT_OUTPUT=$WORKING_DIR/output/$SWIFT_TARGET_ARCH
+# Overridable so a caller that keeps its output tree somewhere other than
+# WORKING_DIR/output/<arch> can still use these scripts. CI builds into a
+# persistent directory on the runner's own disk (O=/mnt/br/shared), which no
+# combination of WORKING_DIR and SWIFT_TARGET_ARCH can spell.
+BUILDROOT_OUTPUT="${BUILDROOT_OUTPUT:=$WORKING_DIR/output/$SWIFT_TARGET_ARCH}"
 BUILDROOT_TARGET=$BUILDROOT_OUTPUT/target
 BUILDROOT_CONFIG=$BUILDROOT_OUTPUT/.config
 BUILDROOT_OPTIONS="O=$BUILDROOT_OUTPUT -C $BUILDROOT_DIR BR2_EXTERNAL=$BR2_EXTERNAL"
