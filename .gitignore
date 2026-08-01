@@ -11,11 +11,12 @@ CTestTestfile.cmake
 _deps
 .devcontainer/Dockerfile-*
 build
-buildroot
-llvm-project
-swift-source
+/buildroot
+/llvm-project
+/swift-source
 dl
 output
 host-swift-*
 .build
-.vscode__pycache__
+.vscode
+__pycache__
