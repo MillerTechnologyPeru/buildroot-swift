@@ -18,4 +18,4 @@ dl
 output
 host-swift-*
 .build
-.vscode
+.vscode__pycache__
