@@ -75,10 +75,7 @@ SWIFTC_EXTRA_FLAGS		= -Xcc -march=armv5te
 else ifeq ($(SWIFT_TARGET_ARCH),riscv64)
 SWIFT_EXTRA_FLAGS		= -mno-relax -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
 SWIFTC_EXTRA_FLAGS		= -Xcc -mno-relax -Xcc -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
-else ifeq ($(SWIFT_TARGET_ARCH),mipsel)
-SWIFT_EXTRA_FLAGS		= -msoft-float
-SWIFTC_EXTRA_FLAGS		= -Xcc -msoft-float
-else ifeq ($(SWIFT_TARGET_ARCH),mips64el)
+else ifneq ($(filter $(SWIFT_TARGET_ARCH),mips mipsel mips64 mips64el),)
 SWIFT_EXTRA_FLAGS		= -msoft-float
 SWIFTC_EXTRA_FLAGS		= -Xcc -msoft-float
 else ifeq ($(SWIFT_TARGET_ARCH),powerpc)
@@ -97,9 +94,12 @@ SWIFT_GCC_VERSION = $(call qstrip,$(BR2_GCC_VERSION))
 # CMAKE_SYSTEM_PROCESSOR value for the CMake-based Swift library packages
 # (swift-system, swift-asn1, swift-crypto, ...). Their SwiftSupport.cmake
 # whitelists uname-style processor names and hard-errors on anything else:
-# armv7 must be spelled armv7l, armv6 armv6l, powerpc64le ppc64le. armv5 has
-# no entry at all, so the closest whitelisted value is used; the result only
-# feeds the whitelist and install paths we do not use.
+# armv7 must be spelled armv7l, armv6 armv6l, powerpc64le ppc64le. armv5 and
+# the four mips variants have no entry at all, so the closest whitelisted value
+# of the same width is used; the result only feeds the whitelist and install
+# paths we do not use - every one of these packages stages its output by hand
+# (see e.g. SWIFT_SYSTEM_INSTALL_STAGING_CMDS) rather than running the upstream
+# install rules.
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_CMAKE_PROCESSOR = armv7l
 else ifeq ($(SWIFT_TARGET_ARCH),armv6)
@@ -109,6 +109,10 @@ SWIFT_CMAKE_PROCESSOR = armv6l
 else ifeq ($(SWIFT_TARGET_ARCH),powerpc64le)
 SWIFT_CMAKE_PROCESSOR = ppc64le
 else ifeq ($(SWIFT_TARGET_ARCH),powerpc)
+SWIFT_CMAKE_PROCESSOR = ppc64
+else ifneq ($(filter $(SWIFT_TARGET_ARCH),mips mipsel),)
+SWIFT_CMAKE_PROCESSOR = i686
+else ifneq ($(filter $(SWIFT_TARGET_ARCH),mips64 mips64el),)
 SWIFT_CMAKE_PROCESSOR = ppc64
 else
 SWIFT_CMAKE_PROCESSOR = $(SWIFT_TARGET_ARCH)
@@ -207,7 +211,7 @@ SWIFT_CONF_OPTS = \
 
 # The overridable retain/release fast path uses indirect musttail calls,
 # which clang cannot generate on these targets
-ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mipsel mips64el),)
+ifneq ($(filter $(SWIFT_TARGET_ARCH),powerpc powerpc64le mips mipsel mips64 mips64el),)
 SWIFT_CONF_OPTS += -DSWIFT_STDLIB_OVERRIDABLE_RETAIN_RELEASE=FALSE
 endif
 
@@ -221,49 +225,12 @@ SWIFT_CONF_OPTS += \
 	-DCMAKE_CXX_COMPILER_LAUNCHER=$(CCACHE)
 endif
 
-ifeq ($(SWIFT_TARGET_ARCH),armv7)
+ifneq ($(filter $(SWIFT_TARGET_ARCH),armv7 armv6 armv5 riscv64 mips mipsel mips64 mips64el powerpc),)
 SWIFT_CONF_OPTS	+= \
 	-DCMAKE_Swift_FLAGS_DEBUG="" \
 	-DCMAKE_Swift_FLAGS_RELEASE="" \
 	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
 
-else ifeq ($(SWIFT_TARGET_ARCH),armv6)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else ifeq ($(SWIFT_TARGET_ARCH),armv5)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else ifeq ($(SWIFT_TARGET_ARCH),riscv64)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else ifeq ($(SWIFT_TARGET_ARCH),mipsel)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else ifeq ($(SWIFT_TARGET_ARCH),mips64el)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else ifeq ($(SWIFT_TARGET_ARCH),powerpc)
-SWIFT_CONF_OPTS	+= \
-	-DCMAKE_Swift_FLAGS_DEBUG="" \
-	-DCMAKE_Swift_FLAGS_RELEASE="" \
-	-DCMAKE_Swift_FLAGS_RELWITHDEBINFO="" \
-
-else
 endif
 
 define SWIFT_CONFIGURE_CMDS
@@ -437,6 +404,10 @@ define HOST_SWIFT_INSTALL_CMDS
 		echo '      "-march=armv5te",' >> $(SWIFT_DESTINATION_FILE);\
     fi
 
+	@case "$(SWIFT_TARGET_ARCH)" in mips|mipsel|mips64|mips64el)\
+		echo '      "-msoft-float",' >> $(SWIFT_DESTINATION_FILE);;\
+    esac
+
 	echo '   ],' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-swiftc-flags":[' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-target", "$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
@@ -473,8 +444,13 @@ define HOST_SWIFT_INSTALL_CMDS
     fi
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
-		echo '      "-Xcc", "-mabi=$(BR2_GCC_TARGET_ABI)",' >> $(SWIFT_DESTINATION_FILE);\
+		echo '      "-Xcc", "-mno-relax",' >> $(SWIFT_DESTINATION_FILE);\
+		echo '      "-Xcc", "-mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))",' >> $(SWIFT_DESTINATION_FILE);\
     fi
+
+	@case "$(SWIFT_TARGET_ARCH)" in mips|mipsel|mips64|mips64el)\
+		echo '      "-Xcc", "-msoft-float",' >> $(SWIFT_DESTINATION_FILE);;\
+    esac
 
 	# Foundation calls fts(3), which lives in musl-fts rather than musl itself
 	@if [ "$(BR2_TOOLCHAIN_USES_MUSL)" = "y" ]; then\

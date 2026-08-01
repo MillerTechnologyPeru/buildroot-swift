@@ -1,0 +1,25 @@
+From e671e3d75486d432c46952da038d6024760a0522 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Wed, 17 Jun 2026 11:39:44 -0400
+Subject: Support Embedded Swift for armv5te
+
+
+Upstream: https://github.com/swiftlang/swift/pull/90023 (merged to main after swift-6.3.3-RELEASE)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ stdlib/public/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/stdlib/public/CMakeLists.txt b/stdlib/public/CMakeLists.txt
+index 1da02b6ad5781..b5638c71f48a7 100644
+--- a/stdlib/public/CMakeLists.txt
++++ b/stdlib/public/CMakeLists.txt
+@@ -245,6 +245,7 @@ if(SWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING)
+     if("ARM" IN_LIST LLVM_TARGETS_TO_BUILD)
+       list(APPEND EMBEDDED_STDLIB_TARGET_TRIPLES
+         "armv4t   armv4t-none-none-eabi     armv4t-none-none-eabi"
++        "armv5te  armv5te-none-none-eabi    armv5te-none-none-eabi"
+         "armv6    armv6-none-none-eabi      armv6-none-none-eabi"
+         "armv6m   armv6m-none-none-eabi     armv6m-none-none-eabi"
+         "armv7    armv7-none-none-eabi      armv7-none-none-eabi"
+

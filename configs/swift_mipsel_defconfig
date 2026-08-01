@@ -1,5 +1,5 @@
 # Architecture
-BR2_mips=y
+BR2_mipsel=y
 BR2_mips_32r6=y
 
 # GNU C Toolchain

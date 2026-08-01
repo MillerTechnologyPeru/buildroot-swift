@@ -1,0 +1,50 @@
+From 18fa1c96e38828442d139dbf8ca1450f13aa7661 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Fri, 26 Jun 2026 09:14:41 -0400
+Subject: [clang] Add Swift support for 32-bit PowerPC
+
+
+The Swift side of 32-bit PowerPC support is already in the release; only
+the clang and backend halves of the calling convention are missing.
+
+Upstream: https://github.com/swiftlang/llvm-project/pull/13257 (open)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ clang/lib/CodeGen/Targets/PPC.cpp           | 5 ++++-
+ llvm/lib/Target/PowerPC/PPCISelLowering.cpp | 7 ++++---
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/clang/lib/CodeGen/Targets/PPC.cpp b/clang/lib/CodeGen/Targets/PPC.cpp
+index ab069bfbd1b51..d2e8d607806b5 100644
+--- a/clang/lib/CodeGen/Targets/PPC.cpp
++++ b/clang/lib/CodeGen/Targets/PPC.cpp
+@@ -387,7 +387,10 @@ class PPC32TargetCodeGenInfo : public TargetCodeGenInfo {
+   PPC32TargetCodeGenInfo(CodeGenTypes &CGT, bool SoftFloatABI,
+                          bool RetSmallStructInRegABI)
+       : TargetCodeGenInfo(std::make_unique<PPC32_SVR4_ABIInfo>(
+-            CGT, SoftFloatABI, RetSmallStructInRegABI)) {}
++            CGT, SoftFloatABI, RetSmallStructInRegABI)) {
++    SwiftInfo =
++        std::make_unique<SwiftABIInfo>(CGT, /*SwiftErrorInRegister=*/false);
++  }
+ 
+   static bool isStructReturnInRegABI(const llvm::Triple &Triple,
+                                      const CodeGenOptions &Opts);
+diff --git a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
+index 76cc06f2b4ed9..1c30846a3182c 100644
+--- a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
++++ b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
+@@ -5978,9 +5978,10 @@ SDValue PPCTargetLowering::LowerCall_32SVR4(
+   const bool IsVarArg = CFlags.IsVarArg;
+   const bool IsTailCall = CFlags.IsTailCall;
+ 
+-  assert((CallConv == CallingConv::C ||
+-          CallConv == CallingConv::Cold ||
+-          CallConv == CallingConv::Fast) && "Unknown calling convention!");
++  assert((CallConv == CallingConv::C || CallConv == CallingConv::Cold ||
++          CallConv == CallingConv::Fast || CallConv == CallingConv::Swift ||
++          CallConv == CallingConv::SwiftTail) &&
++         "Unknown calling convention!");
+ 
+   const Align PtrAlign(4);
+ 

@@ -10,7 +10,7 @@ cd $WORKING_DIR
 make $BUILDROOT_OPTIONS host-swift-build
 
 # Create symlinks for multiarch
-declare -a arr=("arm64" "armv7" "armv6" "armv5" "x86_64" "i386" "ppc64le" "ppc" "riscv64" "mips64" "mips")
+declare -a arr=("arm64" "armv7" "armv6" "armv5" "x86_64" "x86_64_musl" "i386" "ppc64le" "ppc" "riscv64" "mipsel" "mips64el" "mips" "mips64")
 for i in "${arr[@]}"
 do
     if [[ "$i" != "$SWIFT_TARGET_ARCH" ]]; then

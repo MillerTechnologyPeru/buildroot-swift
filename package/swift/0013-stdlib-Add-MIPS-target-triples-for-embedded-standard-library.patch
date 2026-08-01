@@ -1,0 +1,32 @@
+From 0f9d884d287fd813557c1873986fdaf9d981237f Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Wed, 24 Jun 2026 20:39:41 -0400
+Subject: [stdlib] Add MIPS target triples for embedded standard
+ library support
+
+
+Upstream: https://github.com/swiftlang/swift/pull/90182 (open)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ stdlib/public/CMakeLists.txt | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/stdlib/public/CMakeLists.txt b/stdlib/public/CMakeLists.txt
+index b5638c71f48a7..6a4303f1f2a26 100644
+--- a/stdlib/public/CMakeLists.txt
++++ b/stdlib/public/CMakeLists.txt
+@@ -277,6 +277,14 @@ if(SWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING)
+         "avr  avr-none-none-elf    avr-none-none-elf"
+       )
+     endif()
++    if("Mips" IN_LIST LLVM_TARGETS_TO_BUILD)
++      list(APPEND EMBEDDED_STDLIB_TARGET_TRIPLES
++        "mips    mips-none-none-elf      mips-none-none-elf"
++        "mipsel  mipsel-none-none-elf    mipsel-none-none-elf"
++        "mips64  mips64-none-none-elf    mips64-none-none-elf"
++        "mips64el mips64el-none-none-elf mips64el-none-none-elf"
++      )
++    endif()
+   endif()
+ endif()
+ 

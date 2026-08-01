@@ -25,14 +25,16 @@ HOST_SWIFT_BUILDDIR=$HOST_SWIFT_SRCDIR/build
 SWIFT_NATIVE_TOOLS=$HOST_SWIFT_BUILDDIR/usr/bin
 SWIFT_LLVM_DIR=$HOST_SWIFT_BUILDDIR/llvm
 DOCKER_FILE=$SWIFT_BUILDROOT/.devcontainer/Dockerfile
-if [[ "$SWIFT_TARGET_ARCH" == "arm64" ]]; then
-   QEMU_BIN=qemu-aarch64-static
-elif [[ "$SWIFT_TARGET_ARCH" == "armv5" ]]; then
-   QEMU_BIN=qemu-arm-static
-elif [[ "$SWIFT_TARGET_ARCH" == "armv6" ]]; then
-   QEMU_BIN=qemu-arm-static
-elif [[ "$SWIFT_TARGET_ARCH" == "armv7" ]]; then
-   QEMU_BIN=qemu-arm-static
-else
-   QEMU_BIN=qemu-$SWIFT_TARGET_ARCH-static
-fi
+# qemu-user names its binaries after the CPU, not after our defconfig, and the
+# two only coincide for x86_64 and riscv64. Spell every target out rather than
+# deriving it: the old fallback produced names like qemu-arm64-static and
+# qemu-x86_64_musl-static, which simply do not exist.
+case "$SWIFT_TARGET_ARCH" in
+   arm64)              QEMU_BIN=qemu-aarch64-static ;;
+   armv5|armv6|armv7)  QEMU_BIN=qemu-arm-static ;;
+   x86_64|x86_64_musl) QEMU_BIN=qemu-x86_64-static ;;
+   i386)               QEMU_BIN=qemu-i386-static ;;
+   ppc)                QEMU_BIN=qemu-ppc-static ;;
+   ppc64le)            QEMU_BIN=qemu-ppc64le-static ;;
+   *)                  QEMU_BIN=qemu-$SWIFT_TARGET_ARCH-static ;;
+esac

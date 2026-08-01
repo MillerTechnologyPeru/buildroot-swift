@@ -1,0 +1,25 @@
+From 07c9576e446024932d3d9f2dd4cc4ba5d3d4f96d Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Tue, 23 Jun 2026 22:42:26 -0400
+Subject: [stdlib] Fixed `Int128` compilation for big endian
+
+
+Upstream: https://github.com/swiftlang/swift/pull/90148 (merged to main after swift-6.3.3-RELEASE)
+Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
+---
+ stdlib/public/core/Int128.swift | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/stdlib/public/core/Int128.swift b/stdlib/public/core/Int128.swift
+index 93bbf9c9511b0..2b2b5b71ab9ca 100644
+--- a/stdlib/public/core/Int128.swift
++++ b/stdlib/public/core/Int128.swift
+@@ -47,7 +47,7 @@ public struct Int128: Sendable, BitwiseCopyable {
+ #if _endian(little)
+     self = unsafe unsafeBitCast((_low, _high), to: Self.self)
+ #else
+-    self = unsafeBitCast((_high, _low), to: Self.self)
++    self = unsafe unsafeBitCast((_high, _low), to: Self.self)
+ #endif
+   }
+   
