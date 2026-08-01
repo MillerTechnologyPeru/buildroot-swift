@@ -63,6 +63,29 @@ ifeq ($(SWIFT_TARGET_ARCH),i686)
 SWIFT_GCC_MULTIARCH_TRIPLE = i386-linux-$(SWIFT_LIBC_NAME)
 endif
 
+# RISC-V names its ISA and its calling convention separately, and clang derives
+# neither from the target triple: riscv64-unknown-linux-gnu defaults to
+# -march=rv64gc -mabi=lp64d whatever buildroot configured. Both have to be
+# spelled out, or the stdlib is built for a machine other than the one the rest
+# of the system was built for - the default BR2_riscv_g is IMAFD with no
+# compressed instructions, so even the shipped defconfig disagrees with clang's
+# rv64gc, and a soft-float configuration (-mabi=lp64) would still get F and D
+# instructions the core need not implement.
+#
+# The ABI comes from BR2_GCC_TARGET_ABI, but the ISA string does not have a
+# config symbol on RISC-V: buildroot assembles it in arch/arch.mk.riscv as the
+# make variable GCC_TARGET_ARCH, leaving BR2_GCC_TARGET_ARCH empty. arch.mk is
+# included before the packages, so the value is in scope here. Clang spells both
+# exactly as gcc does, down to the _zicsr_zifencei suffix.
+#
+# These reach swiftc's own code generation, not just the clang importer: swift
+# builds its llvm module through clang's CodeGenerator, so -Xcc -march/-mabi
+# land in the module's target-abi flag and the target-features of every function
+# swiftc emits.
+SWIFT_RISCV_ABI_FLAGS = -mno-relax \
+	$(if $(GCC_TARGET_ARCH),-march=$(GCC_TARGET_ARCH)) \
+	$(if $(call qstrip,$(BR2_GCC_TARGET_ABI)),-mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI)))
+
 ifeq ($(SWIFT_TARGET_ARCH),armv7)
 SWIFT_EXTRA_FLAGS		= -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
 SWIFTC_EXTRA_FLAGS		= -Xcc -mfloat-abi=$(call qstrip,$(BR2_GCC_TARGET_FLOAT_ABI))
@@ -73,8 +96,8 @@ else ifeq ($(SWIFT_TARGET_ARCH),armv5)
 SWIFT_EXTRA_FLAGS		= -march=armv5te
 SWIFTC_EXTRA_FLAGS		= -Xcc -march=armv5te
 else ifeq ($(SWIFT_TARGET_ARCH),riscv64)
-SWIFT_EXTRA_FLAGS		= -mno-relax -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
-SWIFTC_EXTRA_FLAGS		= -Xcc -mno-relax -Xcc -mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))
+SWIFT_EXTRA_FLAGS		= $(SWIFT_RISCV_ABI_FLAGS)
+SWIFTC_EXTRA_FLAGS		= $(addprefix -Xcc ,$(SWIFT_RISCV_ABI_FLAGS))
 else ifneq ($(filter $(SWIFT_TARGET_ARCH),mips mipsel mips64 mips64el),)
 SWIFT_EXTRA_FLAGS		= -msoft-float
 SWIFTC_EXTRA_FLAGS		= -Xcc -msoft-float
@@ -408,6 +431,12 @@ define HOST_SWIFT_INSTALL_CMDS
 		echo '      "-msoft-float",' >> $(SWIFT_DESTINATION_FILE);;\
     esac
 
+	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
+		for flag in $(SWIFT_RISCV_ABI_FLAGS); do\
+			echo "      \"$$flag\"," >> $(SWIFT_DESTINATION_FILE);\
+		done;\
+    fi
+
 	echo '   ],' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-swiftc-flags":[' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-target", "$(SWIFT_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
@@ -444,8 +473,9 @@ define HOST_SWIFT_INSTALL_CMDS
     fi
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "riscv64" ]; then\
-		echo '      "-Xcc", "-mno-relax",' >> $(SWIFT_DESTINATION_FILE);\
-		echo '      "-Xcc", "-mabi=$(call qstrip,$(BR2_GCC_TARGET_ABI))",' >> $(SWIFT_DESTINATION_FILE);\
+		for flag in $(SWIFT_RISCV_ABI_FLAGS); do\
+			echo "      \"-Xcc\", \"$$flag\"," >> $(SWIFT_DESTINATION_FILE);\
+		done;\
     fi
 
 	@case "$(SWIFT_TARGET_ARCH)" in mips|mipsel|mips64|mips64el)\
