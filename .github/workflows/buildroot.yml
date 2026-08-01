@@ -6,7 +6,7 @@ jobs:
         strategy:
           fail-fast: false
           matrix:
-            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "x86_64_musl", "i386", "ppc64le", "riscv64"]
+            arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "x86_64_musl", "i386", "ppc64le"]
         runs-on: ubuntu-latest
         container: colemancda/buildroot-swift:swift_${{ matrix.arch }}_defconfig
         steps:

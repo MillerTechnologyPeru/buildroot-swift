@@ -19,7 +19,7 @@ jobs:
         strategy:
           fail-fast: false
           matrix:
-            config: ["ppc", "mipsel", "mips64el", "mips", "mips64"]
+            config: ["riscv64", "ppc", "mipsel", "mips64el", "mips", "mips64"]
         runs-on: [self-hosted, master]
         container: colemancda/buildroot-swift
         timeout-minutes: 720
