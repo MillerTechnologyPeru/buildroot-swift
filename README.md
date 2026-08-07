@@ -3,7 +3,10 @@ Buildroot external to support the Swift programming language
 
 ## Supported architectures
 
-Built and smoke-tested on every push:
+Built and smoke-tested by the `Buildroot` workflow. Every architecture is
+built from source, toolchain included, which is hours of compute per
+architecture: the workflow runs on a self-hosted runner and is started by
+hand rather than on every push.
 
 | defconfig | Architecture | libc |
 | --- | --- | --- |
@@ -19,7 +22,7 @@ Built and smoke-tested on every push:
 ### Experimental
 
 These build the Swift stdlib only, from the `Buildroot experimental` workflow,
-which is run by hand rather than on every push.
+which is run by hand on the same self-hosted runner.
 
 | defconfig | Architecture | libc |
 | --- | --- | --- |
@@ -32,12 +35,14 @@ which is run by hand rather than on every push.
 
 MIPS, 32-bit PowerPC and RISC-V need the Swift calling convention in clang,
 which no Swift release carries yet. The patches are in
-`package/swift/swift-source-patches/llvm-project/`, but they only take effect
-in a toolchain built from source: `install-swift.sh` downloads a prebuilt one
-and symlinks `SWIFT_LLVM_DIR` at the system LLVM, which makes `host-swift`
-skip its own build. Pass a toolchain that carries them through the workflow's
-`toolchain_url` input, or those architectures are built by a clang that
-ignores `swiftcall`.
+`package/swift/swift-source-patches/llvm-project/`, and they only take effect
+in a toolchain built from source, which is why CI no longer runs in the
+arch-tagged Docker images: those bake in a prebuilt toolchain via
+`install-swift.sh`, which unpacks a swift.org build and symlinks
+`SWIFT_LLVM_DIR` at the system LLVM. `host-swift` then finds its output
+already there and skips its own build, so the patches never reach the clang
+that compiles the target stdlib and `swiftcall` is silently ignored rather
+than rejected.
 
 RISC-V 64 looks at first like it needs no such patch - `RISCVTargetCodeGenInfo`
 does register a `SwiftABIInfo` upstream - but that is only the CodeGen half.
