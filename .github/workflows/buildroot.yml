@@ -1,14 +1,33 @@
 name: Buildroot
-on: [push]
+# Builds the proven architectures the same way buildroot-experimental.yml
+# builds the rest: entirely from source, out of the base
+# colemancda/buildroot-swift image.
+#
+# This used to run on ubuntu-latest in the arch-tagged images
+# (colemancda/buildroot-swift:swift_<arch>_defconfig), which bake in a prebuilt
+# toolchain via install-swift.sh. That short-circuits host-swift's own build -
+# SWIFT_LLVM_DIR already exists, so HOST_SWIFT_BUILD_CMDS skips straight past
+# build-script - and the toolchain the target stdlib is then compiled with is
+# whatever swift.org published, not the one this tree describes. Every patch
+# under package/swift/swift-source-patches/ silently has no effect, which is
+# how a clang that ignores swiftcall got as far as it did on MIPS and 32-bit
+# PowerPC. The base image has nothing pre-installed under output/, so
+# host-swift compiles the patched llvm-project and swift sources itself.
+#
+# That is hours of compute per architecture, well past what a GitHub-hosted
+# runner will sit through, so this runs on the self-hosted runner and is
+# started by hand rather than on every push.
+on: [workflow_dispatch]
 jobs:
     build:
-        name: Build Swift for Buildroot
+        name: Build Swift for Buildroot (${{ matrix.arch }})
         strategy:
           fail-fast: false
           matrix:
             arch: ["arm64", "armv7", "armv6", "armv5", "x86_64", "x86_64_musl", "i386", "ppc64le"]
-        runs-on: ubuntu-latest
-        container: colemancda/buildroot-swift:swift_${{ matrix.arch }}_defconfig
+        runs-on: [self-hosted, linux, x64]
+        container: colemancda/buildroot-swift
+        timeout-minutes: 720
         steps:
         - name: Checkout
           uses: actions/checkout@v4
@@ -22,7 +41,7 @@ jobs:
           uses: actions/upload-artifact@v4.5.0
           with:
             name: build-${{ matrix.arch }}
-            path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/images/rootfs.tar
+            path: ./output/${{ matrix.arch }}/images/rootfs.tar
         - name: Build Test
           run: |
               export SWIFT_BUILDROOT=$GITHUB_WORKSPACE
@@ -32,5 +51,4 @@ jobs:
           uses: actions/upload-artifact@v4.5.0
           with:
             name: swift-hello-${{ matrix.arch }}
-            path: /workspaces/buildroot-swift/output/${{ matrix.arch }}/target/usr/bin/swift-hello
-
+            path: ./output/${{ matrix.arch }}/target/usr/bin/swift-hello

@@ -1,6 +1,6 @@
 name: Buildroot experimental
 # Architectures that build the Swift stdlib but are not yet proven enough to
-# gate every push. Built entirely from source, the way buildroot-host.yml
+# sit in the main workflow. Built entirely from source, the way buildroot.yml
 # builds the proven architectures: no install-swift.sh step, so host-swift
 # has nothing pre-installed to short-circuit its own from-source build, and
 # actually compiles the patched llvm-project and swift sources in
@@ -10,7 +10,7 @@ name: Buildroot experimental
 # that patch, and silently lets clang ignore swiftcall instead of failing.
 #
 # That is hours of compute, so this runs on the self-hosted "master" runner
-# rather than ubuntu-latest, same as buildroot-host.yml.
+# rather than ubuntu-latest, same as buildroot.yml.
 on: [workflow_dispatch]
 jobs:
 
