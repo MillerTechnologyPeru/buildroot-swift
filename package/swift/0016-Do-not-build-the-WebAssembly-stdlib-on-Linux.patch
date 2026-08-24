@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 24 Aug 2026 00:00:00 -0400
+Subject: Do not build the WebAssembly stdlib on Linux
+
+mixin_linux_installation asks for WasmKit and a WebAssembly standard
+library, so every Linux toolchain build compiles a wasi-sysroot, a second
+LLVM targeting wasm32, and the stdlib on top of it. This produces nothing
+we use: the toolchains built here target Linux.
+
+It also does not currently configure. The wasm stdlib is the one place
+that reaches the string processing sources through a path with a
+"swift/.." segment in it, and its configure ends with
+
+  CMake Error at stdlib/cmake/modules/AddSwiftStdlib.cmake:1212:
+    No SOURCES given to target: swift_RegexParser-wasi-wasm32
+
+for each of _RegexParser, _StringProcessing and RegexBuilder, while the
+Linux stdlib built from the same sources moments earlier.
+
+Drop the three options rather than carry a build that costs hours and
+fails at the end of them.
+---
+--- a/utils/build-presets.ini
++++ b/utils/build-presets.ini
+@@ -861,7 +861,6 @@
+ xctest
+ swiftdocc
+ swiftformat
+-wasmkit
+ 
+ build-ninja
+ install-llvm
+@@ -879,12 +878,10 @@
+ install-sourcekit-lsp
+ install-swiftformat
+ install-swiftdocc
+-install-wasmkit
+ build-swift-static-stdlib
+ build-swift-static-sdk-overlay
+ build-swift-stdlib-unittest-extra
+ build-embedded-stdlib-cross-compiling
+-build-wasm-stdlib
+ 
+ # Executes the lit tests for the installable package that is created
+ # Assumes the swift-integration-tests repo is checked out
