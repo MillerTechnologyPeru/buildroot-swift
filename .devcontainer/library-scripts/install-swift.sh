@@ -34,7 +34,22 @@ SWIFT_BIN_URL="${SWIFT_BIN_URL:=$APPLE_SWIFT_BIN_URL}"
 if [ ! -d "$SWIFT_NATIVE_TOOLS" ]; then
     echo "Download $SWIFT_BIN_URL"
     cd /tmp
-    curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz
+    # Retry, and resume rather than restart. This is a gigabyte over TLS, and
+    # a single attempt fails often enough to matter on a machine that runs it
+    # unattended:
+    #
+    #   curl: (56) OpenSSL SSL_read: error:0A000126:SSL routines::unexpected
+    #   eof while reading, errno 0
+    #
+    # which took out a toolchain restore with the URL perfectly healthy - the
+    # same request answered 200 with a Content-Length seconds later.
+    # --retry-all-errors is what covers that case; a bare --retry only acts on
+    # transient HTTP statuses and connection failures, not on a transfer that
+    # dies mid-stream. -C - resumes the partial file instead of starting the
+    # gigabyte again.
+    rm -f swift.tar.gz
+    curl -fsSL --retry 6 --retry-delay 15 --retry-all-errors -C - \
+        "$SWIFT_BIN_URL" -o swift.tar.gz
     # - Unpack the toolchain, set libs permissions, and clean up.
     mkdir -p $HOST_SWIFT_BUILDDIR
     tar -xzf swift.tar.gz --directory $HOST_SWIFT_BUILDDIR --strip-components=1 
