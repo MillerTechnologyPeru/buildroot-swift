@@ -41,25 +41,53 @@ endif
 # branch does not, so the file fails to compile against musl with "property
 # 'fts_path' is not available due to missing import of defining module". Insert
 # the missing import, skipping files that already have it.
-SWIFT_FOUNDATION_ENUMERATION_SRC = $(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation/Sources/FoundationEssentials/FileManager/FileOperations+Enumeration.swift
-
-define SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
-	awk 'prev == "@preconcurrency import Musl" && $$0 != "internal import _FoundationCShims" \
-		{ print "internal import _FoundationCShims" } { print; prev = $$0 }' \
-		$(SWIFT_FOUNDATION_ENUMERATION_SRC) > $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp
-	mv $(SWIFT_FOUNDATION_ENUMERATION_SRC).br-tmp $(SWIFT_FOUNDATION_ENUMERATION_SRC)
-endef
-
+#
+# 6.4 hits the same rule on glibc, in files that import no shim header at
+# all: against this sysroot clang attributes struct stat and struct timespec
+# to _FoundationCShims too, and the build stops with
+#
+#   Date.swift:262:35: error: property 'tv_sec' is not available due to
+#   missing import of defining module '_FoundationCShims'
+#
+# and the same for st_mode, st_dev, st_ino and st_size in
+# FileManager+Basics.swift and URL_Impl.swift. Upstream builds these files
+# unchanged against its own glibc, so the import is supplied here rather
+# than carried as a patch.
+SWIFT_FOUNDATION_ESSENTIALS_SRCDIR = $(HOST_SWIFT_SRCDIR)/swift-source/swift-foundation/Sources/FoundationEssentials
+SWIFT_FOUNDATION_CSHIMS_IMPORT_SRCS = \
+	Date.swift \
+	FileManager/FileManager+Basics.swift \
+	URL/URL_Impl.swift
 ifeq ($(BR2_TOOLCHAIN_USES_MUSL),y)
-SWIFT_FOUNDATION_PRE_CONFIGURE_HOOKS += SWIFT_FOUNDATION_MUSL_CSHIMS_IMPORT_FIXUP
+SWIFT_FOUNDATION_CSHIMS_IMPORT_SRCS += FileManager/FileOperations+Enumeration.swift
+SWIFT_FOUNDATION_LIBC_IMPORT = @preconcurrency import Musl
+else
+SWIFT_FOUNDATION_LIBC_IMPORT = @preconcurrency import Glibc
 endif
+
+define SWIFT_FOUNDATION_CSHIMS_IMPORT_FIXUP
+	$(foreach src,$(SWIFT_FOUNDATION_CSHIMS_IMPORT_SRCS), \
+		awk 'prev == "$(SWIFT_FOUNDATION_LIBC_IMPORT)" && $$0 != "internal import _FoundationCShims" \
+			{ print "internal import _FoundationCShims" } { print; prev = $$0 }' \
+			$(SWIFT_FOUNDATION_ESSENTIALS_SRCDIR)/$(src) > $(SWIFT_FOUNDATION_ESSENTIALS_SRCDIR)/$(src).br-tmp \
+		&& mv $(SWIFT_FOUNDATION_ESSENTIALS_SRCDIR)/$(src).br-tmp $(SWIFT_FOUNDATION_ESSENTIALS_SRCDIR)/$(src)
+	$(sep))
+endef
+SWIFT_FOUNDATION_PRE_CONFIGURE_HOOKS += SWIFT_FOUNDATION_CSHIMS_IMPORT_FIXUP
 
 define SWIFT_FOUNDATION_CONFIGURE_CMDS
 	# Workaround Dispatch defined with cmake and module
 	rm -rf ${STAGING_DIR}/usr/lib/swift/dispatch
 	# Clean
 	rm -rf $(SWIFT_FOUNDATION_BUILDDIR)
-	rm -rf $(STAGING_DIR)/usr/lib/swift/CoreFoundation
+	# The install below copies _CModulesForClients into the resource
+	# directory, where the compiler finds those module maps on its own. A
+	# rebuild, or an upgrade over a tree that already has them, then sees
+	# each module twice - once installed, once from these sources - and
+	# stops with "redefinition of module '_FoundationCShims'".
+	rm -rf $(STAGING_DIR)/usr/lib/swift/CoreFoundation \
+		$(STAGING_DIR)/usr/lib/swift/_FoundationCShims \
+		$(STAGING_DIR)/usr/lib/swift/_foundation_unicode
 	# Configure
 	(mkdir -p $(SWIFT_FOUNDATION_BUILDDIR) && \
 	cd $(SWIFT_FOUNDATION_BUILDDIR) && \
@@ -70,6 +98,7 @@ define SWIFT_FOUNDATION_CONFIGURE_CMDS
 		-DBUILD_SHARED_LIBS=ON \
 		-DCMAKE_BUILD_TYPE=$(if $(BR2_ENABLE_RUNTIME_DEBUG),Debug,Release) \
     	-DCMAKE_C_COMPILER=$(SWIFT_NATIVE_PATH)/clang \
+    	-DCMAKE_Swift_COMPILER=$(SWIFT_NATIVE_PATH)/swiftc \
     	-DCMAKE_C_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))" \
     	-DCMAKE_C_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_FTS_LIBS)" \
 		-DCMAKE_CXX_COMPILER=$(SWIFT_NATIVE_PATH)/clang++ \

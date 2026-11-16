@@ -3,8 +3,14 @@ WORKING_DIR="${WORKING_DIR:=$(pwd)}"
 SWIFT_BUILDROOT="${SWIFT_BUILDROOT:=$(pwd)}"
 SWIFT_TARGET_ARCH="${SWIFT_TARGET_ARCH:=arm64}"
 BUILDROOT_RELEASE="${BUILDROOT_RELEASE:=2026.05}"
-SWIFT_BRANCH="${SWIFT_BRANCH:=swift-6.4.2-release}"
-SWIFT_VERSION="${SWIFT_VERSION:=swift-6.4.2-RELEASE}"
+# The release comes from the swift package, never from the environment: the
+# build image sets SWIFT_VERSION and SWIFT_BRANCH for the toolchain it was
+# built with, so honouring them installed that toolchain into a
+# host-swift-<ver> directory named after a different one.
+SWIFT_RELEASE=$(sed -n 's/^SWIFT_VERSION *= *//p' "$SWIFT_BUILDROOT/package/swift/swift.mk" | head -1)
+[ -n "$SWIFT_RELEASE" ] || { echo "no SWIFT_VERSION in $SWIFT_BUILDROOT/package/swift/swift.mk" >&2; exit 1; }
+SWIFT_BRANCH="swift-$SWIFT_RELEASE-release"
+SWIFT_VERSION="swift-$SWIFT_RELEASE-RELEASE"
 SWIFT_PLATFORM="${SWIFT_PLATFORM:=debian12}"
 
 # Allow buildroot host packages (tar) to configure when running as root,
@@ -23,7 +29,7 @@ BUILDROOT_OUTPUT="${BUILDROOT_OUTPUT:=$WORKING_DIR/output/$SWIFT_TARGET_ARCH}"
 BUILDROOT_TARGET=$BUILDROOT_OUTPUT/target
 BUILDROOT_CONFIG=$BUILDROOT_OUTPUT/.config
 BUILDROOT_OPTIONS="O=$BUILDROOT_OUTPUT -C $BUILDROOT_DIR BR2_EXTERNAL=$BR2_EXTERNAL"
-HOST_SWIFT_SRCDIR=$BUILDROOT_OUTPUT/build/host-swift-6.4.2
+HOST_SWIFT_SRCDIR=$BUILDROOT_OUTPUT/build/host-swift-$SWIFT_RELEASE
 SWIFT_LLVM_BUILD_DIR=$HOST_SWIFT_SRCDIR/swift-source/build/buildbot_linux/llvm-linux-$(uname -m)
 HOST_SWIFT_BUILDDIR=$HOST_SWIFT_SRCDIR/build
 SWIFT_NATIVE_TOOLS=$HOST_SWIFT_BUILDDIR/usr/bin
