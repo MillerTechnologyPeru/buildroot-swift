@@ -1,5 +1,5 @@
 ### XCTest
-XCTEST_VERSION = 6.3.3
+XCTEST_VERSION = 6.4.2
 XCTEST_SITE = $(call github,swiftlang,swift-corelibs-xctest,swift-$(XCTEST_VERSION)-RELEASE)
 XCTEST_LICENSE = Apache-2.0
 XCTEST_LICENSE_FILES = LICENSE
@@ -38,6 +38,7 @@ define XCTEST_CONFIGURE_CMDS
 		-DBUILD_SHARED_LIBS=ON \
 		-DCMAKE_BUILD_TYPE=$(if $(BR2_ENABLE_RUNTIME_DEBUG),Debug,Release) \
     	-DCMAKE_C_COMPILER=$(SWIFT_NATIVE_PATH)/clang \
+    	-DCMAKE_Swift_COMPILER=$(SWIFT_NATIVE_PATH)/swiftc \
     	-DCMAKE_C_FLAGS="-w -fuse-ld=lld -target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR) $(SWIFT_EXTRA_FLAGS) -I$(STAGING_DIR)/usr/include -B$(STAGING_DIR)/usr/lib -B$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION)) -L$(HOST_DIR)/lib/gcc/$(GNU_TARGET_NAME)/$(call qstrip,$(BR2_GCC_VERSION))" \
     	-DCMAKE_C_LINK_FLAGS="-target $(SWIFT_TARGET_NAME) --sysroot=$(STAGING_DIR)" \
 		$(XCTEST_CONF_OPTS) \

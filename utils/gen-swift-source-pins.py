@@ -154,13 +154,21 @@ def generate(version, config_path, cache_dir):
     tag = "swift-{0}-RELEASE".format(version)
     config = read_config(tag, config_path)
 
-    scheme = None
-    for name, candidate in config["branch-schemes"].items():
-        if tag in candidate.get("aliases", []) or name == "release/{0}".format(
-            ".".join(version.split(".")[:2])
-        ):
-            scheme = candidate
-            break
+    # The scheme for a release has not always had the same name: 6.3 used
+    # "release/6.3", 6.4 has "release/6.4.x" plus one per patch release such
+    # as "release/6.4.2". Prefer the most specific one that exists.
+    schemes = config["branch-schemes"]
+    major_minor = ".".join(version.split(".")[:2])
+    scheme = next(
+        (candidate for candidate in schemes.values()
+         if tag in candidate.get("aliases", [])),
+        None,
+    )
+    for name in ("release/{0}".format(version),
+                 "release/{0}".format(major_minor),
+                 "release/{0}.x".format(major_minor)):
+        if scheme is None:
+            scheme = schemes.get(name)
     if scheme is None:
         raise RuntimeError("no branch-scheme for {0}".format(tag))
 

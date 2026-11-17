@@ -20,10 +20,12 @@ Linux stdlib built from the same sources moments earlier.
 
 Drop the three options rather than carry a build that costs hours and
 fails at the end of them.
+
+(6.4 renamed build-wasm-stdlib to build-wasi-stdlib.)
 ---
 --- a/utils/build-presets.ini
 +++ b/utils/build-presets.ini
-@@ -861,7 +861,6 @@
+@@ -874,7 +874,6 @@ swift-testing-macros
  xctest
  swiftdocc
  swiftformat
@@ -31,7 +33,7 @@ fails at the end of them.
  
  build-ninja
  install-llvm
-@@ -879,12 +878,10 @@
+@@ -892,12 +891,10 @@ install-prefix=/usr
  install-sourcekit-lsp
  install-swiftformat
  install-swiftdocc
@@ -40,7 +42,7 @@ fails at the end of them.
  build-swift-static-sdk-overlay
  build-swift-stdlib-unittest-extra
  build-embedded-stdlib-cross-compiling
--build-wasm-stdlib
+-build-wasi-stdlib
  
  # Executes the lit tests for the installable package that is created
  # Assumes the swift-integration-tests repo is checked out
