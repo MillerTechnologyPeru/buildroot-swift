@@ -398,7 +398,9 @@ define HOST_SWIFT_BUILD_CMDS
 		(cd $(SWIFT_SOURCE_DIR) \
 			&& SWIFT_SOURCE_ROOT=$(SWIFT_SOURCE_DIR) SWIFT_REPO_NAME=swift \
 			$(SWIFT_SOURCE_DIR)/swift/utils/build-script \
-			--preset=buildbot_linux,no_test \
+			--preset-file=$(SWIFT_SOURCE_DIR)/swift/utils/build-presets.ini \
+			--preset-file=$(HOST_SWIFT_PKGDIR)/build-presets.ini \
+			--preset=swift_linux_host \
 			install_destdir=$(HOST_SWIFT_BUILDDIR) \
 			installable_package=$(HOST_SWIFT_BUILDDIR)/swift.tar.gz) \
 		&& ln -s $(SWIFT_SOURCE_DIR)/build/buildbot_linux/llvm-linux-$(shell uname -m) $(SWIFT_LLVM_DIR); \
