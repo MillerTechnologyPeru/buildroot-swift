@@ -16,8 +16,8 @@ Signed-off-by: Alsey Coleman Miller <alseycmiller@gmail.com>
 diff --git a/stdlib/public/CMakeLists.txt b/stdlib/public/CMakeLists.txt
 --- a/stdlib/public/CMakeLists.txt
 +++ b/stdlib/public/CMakeLists.txt
-@@ -258,6 +258,12 @@ if(SWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING)
-         "mips64el mips64el-none-none-elf mips64el-none-none-elf"
+@@ -277,6 +277,12 @@ if(SWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING)
+         "avr  avr-none-none-elf    avr-none-none-elf"
        )
      endif()
 +
