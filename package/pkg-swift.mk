@@ -86,12 +86,15 @@ $(2)_DEPENDENCIES += swift
 ifndef $(2)_BUILD_CMDS
 ifeq ($(4),target)
 
-# Build package for target
+# Build package for target. The native build system is named because the
+# swift-build backend, the default from Swift 6.4, ignores --destination and
+# builds for the host instead.
 define $(2)_BUILD_CMDS
 	( \
 	cd $$($(2)_SRCDIR) && \
 	PATH=$(BR_PATH):$(HOST_SWIFT_SUPPORT_DIR)/bin \
 	$(SWIFT_BIN) build \
+		--build-system native \
 		--destination $(SWIFT_DESTINATION_FILE) \
 		$$($(2)_BUILD_OPTS) \
 	)
