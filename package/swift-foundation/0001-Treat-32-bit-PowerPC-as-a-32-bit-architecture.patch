@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PATCH] Treat 32-bit PowerPC as a 32-bit architecture
+
+CGFloat, NSRange, NSNumber and the Scanner pick their 32 or 64-bit
+representation from a list of architectures, and stop with "This
+architecture isn't known" on any other. powerpc64 and powerpc64le are on
+the 64-bit line; add powerpc to the 32-bit one.
+---
+--- a/Sources/Foundation/CGFloat.swift
+--- a/Sources/Foundation/CGFloat.swift
++++ b/Sources/Foundation/CGFloat.swift
+@@ -13,7 +13,7 @@
+ 
+ @frozen
+ public struct CGFloat: Sendable {
+-#if arch(i386) || arch(arm) || arch(wasm32)
++#if arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+     /// The native type used to store the CGFloat, which is Float on
+     /// 32-bit architectures and Double on 64-bit architectures.
+     public typealias NativeType = Float
+@@ -189,7 +189,7 @@
+ 
+     @_transparent
+     public init(bitPattern: UInt) {
+-#if arch(i386) || arch(arm) || arch(wasm32)
++#if arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+         native = NativeType(bitPattern: UInt32(bitPattern))
+ #elseif arch(x86_64) || arch(arm64) || arch(s390x) || arch(powerpc64) || arch(powerpc64le)
+         native = NativeType(bitPattern: UInt64(bitPattern))
+--- a/Sources/Foundation/NSRange.swift
++++ b/Sources/Foundation/NSRange.swift
+@@ -379,7 +379,7 @@
+     }
+     
+     static func objCType() -> String {
+-#if arch(i386) || arch(arm) || arch(wasm32)
++#if arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+         return "{_NSRange=II}"
+ #elseif arch(x86_64) || arch(arm64) || arch(s390x) || arch(powerpc64) || arch(powerpc64le)
+         return "{_NSRange=QQ}"
+--- a/Sources/Foundation/NSNumber.swift
++++ b/Sources/Foundation/NSNumber.swift
+@@ -740,7 +740,7 @@
+         var value = value
+         #if arch(x86_64) || arch(arm64) || arch(s390x) || arch(powerpc64) || arch(powerpc64le)
+             self.init(bytes: &value, numberType: kCFNumberSInt64Type)
+-        #elseif arch(i386) || arch(arm) || arch(wasm32)
++        #elseif arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+             self.init(bytes: &value, numberType: kCFNumberSInt32Type)
+         #else
+             #error("This architecture isn't known. Add it to the 32-bit or 64-bit line.")
+@@ -756,7 +756,7 @@
+             var value = Int64(value)
+             self.init(bytes: &value, numberType: kCFNumberSInt64Type)
+         }
+-    #elseif arch(i386) || arch(arm) || arch(wasm32)
++    #elseif arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+         var value = Int64(value)
+         self.init(bytes: &value, numberType: kCFNumberSInt64Type)
+     #else
+--- a/Sources/Foundation/ScannerAPI.swift
++++ b/Sources/Foundation/ScannerAPI.swift
+@@ -43,7 +43,7 @@
+         if let value = scanInt64(representation: representation) {
+             return Int(value)
+         }
+-        #elseif arch(i386) || arch(arm) || arch(wasm32)
++        #elseif arch(i386) || arch(arm) || arch(wasm32) || arch(powerpc)
+         if let value = scanInt32(representation: representation) {
+             return Int(value)
+         }
