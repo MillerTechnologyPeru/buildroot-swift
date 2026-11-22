@@ -1,0 +1,128 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PATCH] [stdlib] Write float digits in little-endian order on every
+ target
+
+FloatingPointToString writes ASCII digits several at a time: pairs from
+asciiDigitTable as a UInt16, eight from _intToEightDigits as a UInt64,
+and "inf" and "0.0" as UInt32 constants. All of them are packed with the
+first character in the low byte, which only comes out in order on a
+little-endian target. On big-endian ones the characters land reversed or
+over each other: on 32-bit PowerPC, 1.5 as a Double prints as "0.0" and
+-2.75 as "-0.00".
+
+Store each packed value's littleEndian, which is free on little-endian
+targets.
+---
+--- a/stdlib/public/core/FloatingPointToString.swift
++++ b/stdlib/public/core/FloatingPointToString.swift
+@@ -341,7 +341,7 @@
+     // Step 5: Emit the integer part
+     let text = _intToEightDigits(UInt32(intPart))
+     unsafe buffer.storeBytes(
+-      of: text,
++      of: text.littleEndian,
+       toUncheckedByteOffset: nextDigit,
+       as: UInt64.self)
+     nextDigit &+= 8
+@@ -616,7 +616,7 @@
+     let d12 = Int(truncatingIfNeeded: t >> fractionBits)
+     let text = unsafe asciiDigitTable[unchecked: d12]
+     unsafe buffer.storeBytes(
+-      of: text,
++      of: text.littleEndian,
+       toUncheckedByteOffset: nextDigit,
+       as: UInt16.self)
+     nextDigit &+= 2
+@@ -1056,7 +1056,7 @@
+     // t0 has t0digits digits.  Write them out
+     let text = _intToEightDigits(t0)
+     buffer.storeBytes(
+-      of: text,
++      of: text.littleEndian,
+       toByteOffset: nextDigit,
+       as: UInt64.self)
+     nextDigit &+= 8
+@@ -1071,7 +1071,7 @@
+     // Write out exactly 8 digits, assuming little-endian.
+     let chars = _intToEightDigits(d12345678)
+     unsafe buffer.storeBytes(
+-      of: chars,
++      of: chars.littleEndian,
+       toUncheckedByteOffset: nextDigit,
+       as: UInt64.self)
+     nextDigit &+= 8
+@@ -1091,7 +1091,7 @@
+       // Write them out:
+       let chars = _intToEightDigits(next8Digits)
+       unsafe buffer.storeBytes(
+-        of: chars,
++        of: chars.littleEndian,
+         toUncheckedByteOffset: nextDigit,
+         as: UInt64.self)
+       nextDigit &+= 8
+@@ -1485,11 +1485,11 @@
+       let d12 = d1234 / 100
+       let d34 = d1234 % 100
+       unsafe buffer.storeBytes(
+-        of: asciiDigitTable[Int(bitPattern:d12)],
++        of: asciiDigitTable[Int(bitPattern:d12)].littleEndian,
+         toUncheckedByteOffset: nextDigit,
+         as: UInt16.self)
+       unsafe buffer.storeBytes(
+-        of: asciiDigitTable[Int(bitPattern:d34)],
++        of: asciiDigitTable[Int(bitPattern:d34)].littleEndian,
+         toUncheckedByteOffset: nextDigit &+ 2,
+         as: UInt16.self)
+       nextDigit &+= 4
+@@ -1630,7 +1630,7 @@
+       if e > 999 {
+         let d = asciiDigitTable[e / 100]
+         unsafe buffer.storeBytes(
+-          of: d,
++          of: d.littleEndian,
+           toUncheckedByteOffset: nextDigit,
+           as: UInt16.self)
+         nextDigit &+= 2
+@@ -1646,7 +1646,7 @@
+     }
+     let d = unsafe asciiDigitTable[unchecked: e]
+     buffer.storeBytes(
+-      of: d,
++      of: d.littleEndian,
+       toByteOffset: nextDigit,
+       as: UInt16.self)
+     nextDigit &+= 2
+@@ -1737,13 +1737,13 @@
+ ) -> Range<Int> {
+   if sign == .minus {
+     buffer.storeBytes(
+-      of: 0x666e692d, // "-inf"
++      of: (0x666e692d as UInt32).littleEndian, // "-inf"
+       toByteOffset: 0,
+       as: UInt32.self)
+     return 0..<4
+   } else {
+     buffer.storeBytes(
+-      of: 0x00666e69, // "inf\0"
++      of: (0x00666e69 as UInt32).littleEndian, // "inf\0"
+       toByteOffset: 0,
+       as: UInt32.self)
+     return 0..<3
+@@ -1756,13 +1756,13 @@
+ ) -> Range<Int> {
+   if sign == .minus {
+     buffer.storeBytes(
+-      of: 0x302e302d, // "-0.0"
++      of: (0x302e302d as UInt32).littleEndian, // "-0.0"
+       toByteOffset: 0,
+       as: UInt32.self)
+     return 0..<4
+   } else {
+     buffer.storeBytes(
+-      of: 0x00302e30, // "0.0\0"
++      of: (0x00302e30 as UInt32).littleEndian, // "0.0\0"
+       toByteOffset: 0,
+       as: UInt32.self)
+     return 0..<3
