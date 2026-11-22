@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PowerPC] Default to the secure PLT on 32-bit Linux
+
+32-bit PowerPC code uses the secure PLT only where isPPC32SecurePlt()
+says so: FreeBSD 13 and later, NetBSD, OpenBSD and musl. On glibc Linux
+clang and the backend fall back to the old BSS PLT: calls are emitted as
+"bl foo@plt" with no addend while r30 holds the -fPIC .got2 pointer.
+
+lld implements only the secure PLT. For an addend of zero its call stub
+reads the PLT slot relative to r30 as if r30 were the GOT, so every such
+call from a -fPIC object jumps through the wrong slot; the Swift runtime
+crashes in its first pthread_mutex_lock call. GNU toolchains on Linux
+have defaulted to the secure PLT for years (GCC --enable-secureplt, as
+Buildroot and the distributions configure it), so the BSS PLT also fails
+to interoperate with them.
+
+Treat every Linux libc the way musl is already treated.
+---
+--- a/llvm/include/llvm/TargetParser/Triple.h
++++ b/llvm/include/llvm/TargetParser/Triple.h
+@@ -1077,7 +1077,7 @@
+             ((getOS() == Triple::FreeBSD &&
+               (getOSMajorVersion() >= 13 || getOSVersion().empty())) ||
+              getOS() == Triple::NetBSD || getOS() == Triple::OpenBSD ||
+-             isMusl()));
++             getOS() == Triple::Linux));
+   }
+ 
+   /// Tests whether the target is 32-bit RISC-V.
