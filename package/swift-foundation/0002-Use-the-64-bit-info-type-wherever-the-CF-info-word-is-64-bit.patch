@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PATCH] Use the 64-bit info type wherever the CF info word is 64-bit
+
+CFRuntimeBase's _cfinfoa is a 64-bit atomic on 64-bit targets and in
+every DEPLOYMENT_RUNTIME_SWIFT build, but __CFInfoType, which the info
+accessors read it into, is 64 bits only on 64-bit targets and Android.
+On other 32-bit targets __CFRuntimeSetValue's compare-exchange loop
+passes a 4-byte expected value to an 8-byte exchange, which compares
+and writes back the 4 bytes after it as well. On 32-bit PowerPC the
+loop never succeeds, and the first CFArray hangs.
+
+Use the 64-bit type wherever the word is 64-bit, as Android already
+does. The info bits all sit in the low 32, so no value changes.
+---
+--- a/Sources/CoreFoundation/internalInclude/CFInternal.h
++++ b/Sources/CoreFoundation/internalInclude/CFInternal.h
+@@ -282,7 +282,11 @@
+ #define __CFBitfield64GetValue(V, N1, N2)	(((V) & __CFBitfield64Mask(N1, N2)) >> (N2))
+ #define __CFBitfield64SetValue(V, N1, N2, X)	((V) = ((V) & ~__CFBitfield64Mask(N1, N2)) | ((((uint64_t)X) << (N2)) & __CFBitfield64Mask(N1, N2)))
+ 
+-#if TARGET_RT_64_BIT || TARGET_OS_ANDROID
++// The info word is 64 bits wide on 64-bit targets and wherever CF runs under
++// Swift (see CFRuntimeBase). Reading it into a narrower type truncates it, and
++// passing a narrower expected value to the compare-exchange loops below makes
++// them compare against bytes that are not part of it.
++#if TARGET_RT_64_BIT || TARGET_OS_ANDROID || DEPLOYMENT_RUNTIME_SWIFT
+ typedef uint64_t __CFInfoType;
+ #define __CFInfoMask(N1, N2) __CFBitfield64Mask(N1, N2)
+ #else
