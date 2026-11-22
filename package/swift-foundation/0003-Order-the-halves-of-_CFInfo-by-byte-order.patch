@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PATCH] Order the halves of _CFInfo by byte order
+
+_CFInfo mirrors CFRuntimeBase's 64-bit _cfinfoa as two UInt32 fields,
+info and then pad. That puts info in the low half of the word only on
+little-endian targets. On big-endian ones the type ID and flags of every
+CF object created from Swift land in the high half, where CF does not
+look for them.
+
+Swap the fields on big-endian targets.
+---
+--- a/Sources/Foundation/NSObjCRuntime.swift
++++ b/Sources/Foundation/NSObjCRuntime.swift
+@@ -207,9 +207,15 @@
+ }
+ 
+ internal struct _CFInfo {
+-    // This must match _CFRuntimeBase
++    // This must match _CFRuntimeBase, whose _cfinfoa is one 64-bit word: info
++    // is its low half and pad its high half, in memory order.
++#if _endian(big)
++    var pad : UInt32
++    var info: UInt32
++#else
+     var info: UInt32
+     var pad : UInt32
++#endif
+     init(typeID: CFTypeID) {
+         // This matches what _CFRuntimeCreateInstance does to initialize the info value
+         info = UInt32((UInt32(typeID) << 8) | (UInt32(0x80)))
