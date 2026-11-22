@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PowerPC] Expand 128-bit division on 32-bit targets
+
+PPCTargetLowering never sets the widest division it supports, so it
+stays at the default and i128 sdiv, udiv, srem and urem on 32-bit
+PowerPC become calls to __divti3, __udivti3, __modti3 and __umodti3.
+libgcc only provides those on 64-bit targets, so anything using 128-bit
+division fails to link; the Swift runtime is one, through Int128.
+
+Limit division to 64 bits on 32-bit PowerPC, so ExpandLargeDivRem expands
+wider operations inline, as ARM and 32-bit X86 already do.
+---
+--- a/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
++++ b/llvm/lib/Target/PowerPC/PPCISelLowering.cpp
+@@ -1409,6 +1409,11 @@
+   else
+     setMaxAtomicSizeInBitsSupported(32);
+ 
++  // libgcc has no 128-bit division routines on 32-bit targets, so expand
++  // wider division in IR there, as ARM and 32-bit X86 do.
++  if (!isPPC64)
++    setMaxDivRemBitWidthSupported(64);
++
+   setStackPointerRegisterToSaveRestore(isPPC64 ? PPC::X1 : PPC::R1);
+ 
+   // We have target-specific dag combine patterns for the following nodes:
