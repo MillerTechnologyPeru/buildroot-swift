@@ -1,17 +1,17 @@
 From 2b3c4d5e6f70000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alsey Coleman Miller <alseycmiller@gmail.com>
 Date: Fri, 10 Jul 2026 06:15:00 -0400
-Subject: [PATCH] Provide Float16 conversion helpers on powerpc64le
+Subject: [PATCH] Provide Float16 conversion helpers on PowerPC
 
 Float16Support.cpp implements the soft-float helpers __truncsfhf2 /
 __extendhfsf2 / __truncdfhf2, but its guard excludes PowerPC and the
 implementation uses the C _Float16 type, which Clang does not support on
-powerpc64le. As a result libswiftCore.so references these helpers as
+PowerPC. As a result libswiftCore.so references these helpers as
 undefined symbols and every executable linking it (e.g. swift-hello built
 with C++ interop) fails to link.
 
-Enable the shims for __powerpc64__ and route the _Float16 type through a
-__swift_fp16 typedef that is unsigned short on powerpc64le. The half
+Enable the shims for __powerpc__ and route the _Float16 type through a
+__swift_fp16 typedef that is unsigned short on PowerPC (32 and 64-bit). The half
 values only move through memory as 16-bit patterns and the soft-float ABI
 passes/returns them as i16 in a GPR, so unsigned short is ABI-compatible
 -- this is exactly what compiler-rt does on targets without a native
@@ -24,12 +24,12 @@ __swift_fp16 is still _Float16.
  // provide shims in that case.
  #if (defined(__ANDROID__) && defined(__ARM_ARCH_7A__) && defined(__ARM_EABI__)) || \
 -  ((defined(__i386__) || defined(__i686__) || defined(__arm__) || defined(__x86_64__)) && !defined(__APPLE__))
-+  ((defined(__i386__) || defined(__i686__) || defined(__arm__) || defined(__x86_64__) || defined(__powerpc64__)) && !defined(__APPLE__))
++  ((defined(__i386__) || defined(__i686__) || defined(__arm__) || defined(__x86_64__) || defined(__powerpc__)) && !defined(__APPLE__))
  
  #include "swift/shims/Visibility.h"
  
-+#if defined(__powerpc64__)
-+// Clang does not support the _Float16 type on powerpc64le, but half values
++#if defined(__powerpc__)
++// Clang does not support the _Float16 type on PowerPC, but half values
 +// only move through memory as 16-bit patterns and the soft-float ABI passes
 +// and returns them as i16 in a GPR, so unsigned short is ABI-compatible (this
 +// is what compiler-rt does for targets without a native Float16 type).
