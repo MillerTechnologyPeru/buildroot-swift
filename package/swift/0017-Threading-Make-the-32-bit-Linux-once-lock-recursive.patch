@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alsey Coleman Miller <alseycmiller@gmail.com>
+Date: Sun, 22 Nov 2026 00:00:00 -0500
+Subject: [PATCH] [Threading] Make the 32-bit Linux once lock recursive
+
+On 32-bit Linux there is no room for a per-once lock, so once_slow
+serialises every swift::once behind one global mutex, and holds it while
+the initializer runs. An initializer that runs another once then waits
+on itself. swift_getCanonicalPrespecializedGenericMetadata does exactly
+that: its cacheCanonicalSpecializedMetadata initializer calls getCache,
+which runs its own once. Prespecialization is turned off for 32-bit ARM
+only, and on 32-bit PowerPC every Swift program hangs there before main.
+
+Make the lock recursive. Re-entry is only ever for a different once: the
+predicate is still checked under the lock, and a once whose initializer
+re-enters itself was a bug before. The mutex is set up through
+pthread_once since musl has no static initializer for a recursive one.
+---
+--- a/lib/Threading/Linux.cpp
++++ b/lib/Threading/Linux.cpp
+@@ -38,7 +38,20 @@
+ MainThreadRememberer rememberer;
+ 
+ #if !defined(__LP64__) && !defined(_LP64)
+-pthread_mutex_t once_mutex = PTHREAD_MUTEX_INITIALIZER;
++// One lock serves every once on 32-bit, and a once's initializer may run
++// another once (generic metadata prespecialization does), so the lock has
++// to be recursive. It is set up through pthread_once because musl has no
++// static initializer for a recursive mutex.
++pthread_mutex_t once_mutex;
++pthread_once_t once_mutex_ready = PTHREAD_ONCE_INIT;
++
++void init_once_mutex() {
++  pthread_mutexattr_t attr;
++  pthread_mutexattr_init(&attr);
++  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
++  pthread_mutex_init(&once_mutex, &attr);
++  pthread_mutexattr_destroy(&attr);
++}
+ #endif
+ 
+ #pragma clang diagnostic pop
+@@ -58,6 +71,7 @@
+ #if defined(__LP64__) || defined(_LP64)
+   linux::ulock_lock(&predicate.lock);
+ #else
++  pthread_once(&once_mutex_ready, init_once_mutex);
+   pthread_mutex_lock(&once_mutex);
+ #endif
+   if (predicate.flag.load(std::memory_order_acquire) == 0) {
