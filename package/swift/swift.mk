@@ -421,8 +421,6 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '   "dynamic-library-extension":"so",' >> $(SWIFT_DESTINATION_FILE)
 	echo '   "extra-cc-flags":[' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "--gcc-install-dir=$(SWIFT_GCC_INSTALL_DIR)",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
-	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-fPIC",' >> $(SWIFT_DESTINATION_FILE)
 
 	@if [ "$(SWIFT_TARGET_ARCH)" = "armv5" ]; then\
@@ -491,7 +489,12 @@ define HOST_SWIFT_INSTALL_CMDS
 
 	echo '      "-sdk", "$(STAGING_DIR)"' >> $(SWIFT_DESTINATION_FILE)
 	echo '   ],' >> $(SWIFT_DESTINATION_FILE)
+	# libstdc++'s headers for C++ only: in the C flags they would come before
+	# the compiler's own, and C sources would get its C++-only <stdatomic.h>,
+	# which declares nothing in C.
 	echo '   "extra-cpp-flags":[' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)",' >> $(SWIFT_DESTINATION_FILE)
+	echo '      "-I$(SWIFT_GCC_CXX_INCLUDE_DIR)/$(GNU_TARGET_NAME)",' >> $(SWIFT_DESTINATION_FILE)
 	echo '      "-lstdc++"' >> $(SWIFT_DESTINATION_FILE)
 	echo '   ]' >> $(SWIFT_DESTINATION_FILE)
 	echo '}' >> $(SWIFT_DESTINATION_FILE)
