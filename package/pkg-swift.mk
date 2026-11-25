@@ -81,6 +81,9 @@ $(2)_BUILD_OPTS += \
 # Target packages need the Swift compiler and runtime
 $(2)_DEPENDENCIES += swift
 
+# And the SwiftPM destination file, which a seeded tree may lack (swift.mk).
+$(2)_PRE_BUILD_HOOKS += SWIFT_GENERATE_DESTINATION_FILE
+
 # Build step. Only define it if not already defined by the package .mk
 # file.
 ifndef $(2)_BUILD_CMDS
