@@ -407,7 +407,13 @@ define HOST_SWIFT_BUILD_CMDS
 	fi
 endef
 
-define HOST_SWIFT_INSTALL_CMDS
+# The SwiftPM destination file target Swift packages cross-compile with
+# (pkg-swift.mk). Written as host-swift installs, and again before each such
+# package builds (SWIFT_GENERATE_DESTINATION_FILE in their pre-build hooks): a
+# tree seeded from a toolchain release has host-swift stamped installed
+# without its install commands having run there, and so has no file. It is
+# derived from the tree's own configuration, so writing it again is harmless.
+define SWIFT_GENERATE_DESTINATION_FILE
 	# Create Swift support directory
 	mkdir -p $(HOST_SWIFT_SUPPORT_DIR)
 	# Generate SwiftPM cross compilation toolchain file
@@ -498,6 +504,10 @@ define HOST_SWIFT_INSTALL_CMDS
 	echo '      "-lstdc++"' >> $(SWIFT_DESTINATION_FILE)
 	echo '   ]' >> $(SWIFT_DESTINATION_FILE)
 	echo '}' >> $(SWIFT_DESTINATION_FILE)
+endef
+
+define HOST_SWIFT_INSTALL_CMDS
+	$(SWIFT_GENERATE_DESTINATION_FILE)
 endef
 
 $(eval $(generic-package))
